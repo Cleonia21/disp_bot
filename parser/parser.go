@@ -1,29 +1,76 @@
 package parser
 
-var gServices map[string][]string
+import (
+	"encoding/json"
+	"github.com/mymmrac/telego"
+	"io"
+	"log"
+	"os"
+	"strings"
+)
 
-type ServiceID string
+type StateRegMark string
+type Location string
 
-func InitServices() {
-	gServices = map[string][]string{
-		"АВТО ЛИГА. Остаповский прзд 9,с6": {"остап"},
-		"АВТО ЛИГА. ул Кулаков пер.д 6":    {"кулак"},
-		"АВТОЛАЙТ.Полбина 29,с1":           {"полбина"},
+type Resource map[StateRegMark]Location
+
+type Parser struct {
+	locationsRegExp map[StateRegMark]string
+	stateMarkRegExp string
+}
+
+func (p *Parser) Init() {
+	p.locationsRegExp = make(map[StateRegMark]string)
+	patterns := p.locationsPatterns()
+	p.fillLocationsRegExp(patterns)
+}
+
+func (p *Parser) fillStateMarkRegExp() {
+	p.stateMarkRegExp = `(?i)[авекмнорстух]\d{3}[авекмнорстух]{2}\d{2,3}`
+}
+
+func (p *Parser) fillLocationsRegExp(patterns map[string][]string) {
+	for regMark, locations := range patterns {
+		var regStrs []string
+		for _, location := range locations {
+			regStrs = append(regStrs, "("+location+")")
+		}
+		p.locationsRegExp[StateRegMark(regMark)] = strings.Join(regStrs, "|")
 	}
 }
 
-//s := "к340нт79https://ticket.belkacar.ru/ticket/G1EKZV\nк340нт790\nЦкР-авто\nДолгопрудный"
-//s := strings.Split("Евгений Комов, [09.05.2023 00:10]\nhttps://ticket.belkacar.ru/ticket/8ZDWYD\nо246мн797\nВ Сокольники\n\nАлексей Черепенников, [09.05.2023 00:46]\nhttps://ticket.belkacar.ru/ticket/DLQWJV\nв147мв797\nВ казаков\n\nДиспетчер 1, [09.05.2023 00:46]\n+\n\nВалерия Кретова🧸, [09.05.2023 00:50]\nhttps://ticket.belkacar.ru/ticket/DU2AIT\nх224ма797\nНа Полбина\nКазаков\n\nДиспетчер 1, [09.05.2023 00:54]\n+\n\nДима Назаренко, [09.05.2023 01:10]\nhttps://ticket.belkacar.ru/ticket/0LPVBF\nу297но790\nофис\n\nДима Назаренко, [09.05.2023 01:10]\nhttps://ticket.belkacar.ru/ticket/11920908\nр372мн797\nофис\n\nДиспетчер 1, [09.05.2023 01:25]\n+\n\nВалерия Кретова🧸, [09.05.2023 02:13]\nhttps://ticket.belkacar.ru/ticket/Q44G9U\nх293ма797\nВ казаков\nМарьино\n\nДиспетчер 2, [09.05.2023 02:24]\n+\n\nАлексей Черепенников, [09.05.2023 02:48]\nhttps://ticket.belkacar.ru/ticket/PGU3HN\nн026му797\nВ казаков\n\nДиспетчер 2, [09.05.2023 02:49]\n+\n\nВалерия Кретова🧸, [09.05.2023 03:39]\nhttps://ticket.belkacar.ru/ticket/EMSHKV\nт261мт797\nВ казаков\nНагатино\n\nДиспетчер 2, [09.05.2023 03:41]\n+\n\nАлексей Черепенников, [09.05.2023 05:14]\nhttps://ticket.belkacar.ru/ticket/X6PH3I\nх588нк797 \nВ казаков\n\nДиспетчер 2, [09.05.2023 05:19]\n+\n\nРуслан Залдя, [09.05.2023 05:19]\nhttps://ticket.belkacar.ru/ticket/CIM3AZ\nх693нр790\nВ офис \nЩербинка\n\nАрсений Зайцев, [09.05.2023 05:35]\nhttps://ticket.belkacar.ru/ticket/NWAM20\nе332нт790\nВ Авторусь\n\nДиспетчер 2, [09.05.2023 05:38]\n+\n\nМаксим Меркулов, [09.05.2023 05:50]\nhttps://ticket.belkacar.ru/ticket/11936540\nе713нс790\nв ЦКР\n\nДиспетчер 2, [09.05.2023 05:55]\n+\n\nВалерия Кретова🧸, [09.05.2023 06:13]\nhttps://ticket.belkacar.ru/ticket/11925634\nв192мв797\nВ казаков\n\nДенис Коробков, [09.05.2023 07:04]\nhttps://ticket.belkacar.ru/ticket/11915132\nт645ее790\nШикана\n\nДиспетчер 2, [09.05.2023 07:04]\n+\n\nАндрей Вьюсов, [09.05.2023 18:04]\n==========Смена Вьюсова Андрея=========\n\nАрсений Зайцев, [09.05.2023 21:49]\nhttps://ticket.belkacar.ru/ticket/VJV72O\nт253мк797\nВ казаков\n\nБелугин Денис, [09.05.2023 21:54]\nhttps://ticket.belkacar.ru/ticket/11841650\nв371ма797 В казаков\n\nСтанислав Качусов, [09.05.2023 22:21]\nhttps://ticket.belkacar.ru/ticket/QDHK7E\nа638мс797\nВ казаков\n\nДиспетчер 1, [09.05.2023 22:22]\n+\n\nВиктор Морев, [09.05.2023 22:31]\nhttps://ticket.belkacar.ru/ticket/NWAM20\nе332нт790\nШикана\n\nДиспетчер 1, [09.05.2023 22:43]\n+\n\nРуслан Залдя, [09.05.2023 23:05]\nhttps://ticket.belkacar.ru/ticket/Y6C2CG\nк331рн799\nВ казаков\n\nДенис Коробков, [09.05.2023 23:06]\nhttps://ticket.belkacar.ru/ticket/11910352\nр828мм797\nВ казаков\n\nДиспетчер 1, [09.05.2023 23:15]\n+\n\nКирилл Ураков, [09.05.2023 23:25]\nhttps://ticket.belkacar.ru/ticket/JG9U02\nо828му797\nНа полбина\n\nДиспетчер 1, [09.05.2023 23:26]\n+\n\nРуслан Горбенко, [09.05.2023 23:33]\nhttps://ticket.belkacar.ru/ticket/11934956\nн909нх799\nВ казаков\n\nМаксим Меркулов, [09.05.2023 23:34]\nhttps://ticket.belkacar.ru/ticket/ORDLV6\nр729еа790\nВ казаков\n\nДиспетчер 1, [09.05.2023 23:43]\n+\n\nДмитрий Коваль, [09.05.2023 23:56]\nhttps://ticket.belkacar.ru/ticket/YKMTQB\nв438ма797\nНа Полбина\nпражская\n\nВиктор Морев, [09.05.2023 23:59]\nhttps://ticket.belkacar.ru/ticket/11934760                                               р475ср799\nв АвторемонтПлюс\n\nСтанислав Качусов, [10.05.2023 01:15]\nhttps://ticket.belkacar.ru/ticket/VF5EKY\nт248мо797\nВ казаков\n\nДиспетчер 1, [10.05.2023 01:16]\n+\n\nСтанислав Качусов, [10.05.2023 02:18]\nhttps://ticket.belkacar.ru/ticket/90UTIG\nс497ру790\nна кулак\nмарьина роща\n\nДиспетчер 2, [10.05.2023 02:30]\n+\n\nДмитрий Коваль, [10.05.2023 03:43]\nhttps://ticket.belkacar.ru/ticket/11845345\nх349ев790\nНа шикану\nБирюлево\n\nДиспетчер 2, [10.05.2023 03:48]\n+\n\nСтанислав Качусов, [10.05.2023 04:13]\nhttps://ticket.belkacar.ru/ticket/ELCAVT\nв382ма797\nВ казаков\n\nДмитрий Коваль, [10.05.2023 04:22]\nhttps://ticket.belkacar.ru/ticket/XCCSH3\nв937рн799\nВ сокольники\nШикана\n\nДиспетчер 2, [10.05.2023 04:22]\n+\n\nВиктор Морев, [10.05.2023 04:29]\nhttps://ticket.belkacar.ru/ticket/11935980\nв369ма797\nв офис\n\nКирилл Ураков, [10.05.2023 04:45]\nhttps://ticket.belkacar.ru/ticket/SIWTCZ\nв183мв797\nКазаков\n\nЕгор Горишний, [10.05.2023 05:03]\nhttps://ticket.belkacar.ru/ticket/11809143\nх616мс797\n47км\n\nМаксим Меркулов, [10.05.2023 05:38]\nhttps://ticket.belkacar.ru/ticket/HRABU2\nх341но790\nв сокольники\n\nДиспетчер 2, [10.05.2023 05:39]\n+\n\nВиктор Морев, [10.05.2023 06:22]\nhttps://ticket.belkacar.ru/ticket/ZQZQMB\nк123рн799\nНа шикану\n\nДиспетчер 2, [10.05.2023 06:22]\n+\n\nКирилл Ураков, [10.05.2023 06:30]\nhttps://ticket.belkacar.ru/ticket/11908867\nв388нр790\nВ ЦКР\n\nДиспетчер 2, [10.05.2023 06:37]\n+\n\nБелугин Денис, [10.05.2023 07:09]\nhttps://ticket.belkacar.ru/ticket/11942759\nо690му797 На Дубровку\n\nДиспетчер 2, [10.05.2023 07:10]\n+\n\nДмитрий Коваль, [10.05.2023 07:11]\nhttps://ticket.belkacar.ru/ticket/RSBFCK\nт759мн797\nНа шикану\nкоролёв\n\nДиспетчер 2, [10.05.2023 07:11]\n+\n\nМаксим Тарасов, [10.05.2023 18:03]\n============================\n      Смена Максима Тарасова\n============================\n\nДмитрий Коваль, [10.05.2023 20:43]\nhttps://ticket.belkacar.ru/ticket/11745846\nо414нт790\nЦкр-авто\nИвановское\n\nАндрей Брегеда, [10.05.2023 21:04]\nhttps://ticket.belkacar.ru/ticket/YXQS0C\nо387мн797\nДубровка то\n\nМакс Тихоненков, [10.05.2023 21:05]\nhttps://ticket.belkacar.ru/ticket/FZQDLH\nе058ну790\nКазаков Моторс\nБутырская\n\nДиспетчер 2, [10.05.2023 21:08]\n+\n\nДенис Хохлов, [10.05.2023 21:22]\nhttps://ticket.belkacar.ru/ticket/11710838\nр070мк797\nТо дубровка\n\nДиспетчер 2, [10.05.2023 21:31]\n+\n\nМаксим Меркулов, [10.05.2023 21:47]\nhttps://ticket.belkacar.ru/ticket/FVCUBO\nа638мс797\nКазаков Моторс\n\nПолина Делюкина, [10.05.2023 21:48]\nhttps://ticket.belkacar.ru/ticket/PXPFAF\nр020мо797\nДубровка\n\nСузанна Гулиева😼, [10.05.2023 21:51]\nhttps://ticket.belkacar.ru/ticket/11763143\nс302му797\nто дубровка\n\nАлексей Черепенников, [10.05.2023 21:52]\nhttps://ticket.belkacar.ru/ticket/11703825\nс297му797\nТО Дубровка\n\nДенис ❤‍🔥 Смыслов, [10.05.2023 21:53]\nhttps://ticket.belkacar.ru/ticket/11602447\nр038мт797\nТО Дубровка\n\nДиспетчер 2, [10.05.2023 22:06]\n+\n\nДима Назаренко, [10.05.2023 22:23]\nhttps://ticket.belkacar.ru/ticket/11921370\nт942хв750\nШикана\n\nАндрей Брегеда, [10.05.2023 22:24]\nhttps://ticket.belkacar.ru/ticket/ZJ0RGK\nр501ек790\nЦкр-авто\n\nДиспетчер 2, [10.05.2023 22:27]\n+\n\nСтанислав Чембулатов, [10.05.2023 22:28]\nhttps://ticket.belkacar.ru/ticket/LWF9QP\nа329св790\nПолбина\n\nЧерков Михаил, [10.05.2023 22:29]\nhttps://ticket.belkacar.ru/ticket/O2AI4Z\nт261мт797\nНС-Сервис\nПокровское\n\nДиспетчер 2, [10.05.2023 22:31]\n+\n\nДмитрий Коваль, [10.05.2023 22:46]\nhttps://ticket.belkacar.ru/ticket/11941255\nк340ет790\nКулак\nПерово\n\nДиспетчер 2, [10.05.2023 22:47]\n+\n\nБелугин Денис, [10.05.2023 22:48]\nhttps://ticket.belkacar.ru/ticket/WGYBZX\nе322нн797 Полбина\n\nДиспетчер 2, [10.05.2023 23:00]\n+\n\nМакс Тихоненков, [10.05.2023 23:09]\nhttps://ticket.belkacar.ru/ticket/CVKOJ9\nх135мо797\nКазаков Моторс\nРимская\n\nДиспетчер 2, [10.05.2023 23:15]\n+\n\nДенис Хохлов, [10.05.2023 23:18]\nhttps://ticket.belkacar.ru/ticket/11914282\nс809мв797\nПолбина\n\nДиспетчер 2, [10.05.2023 23:23]\n+\n\nВиктор Морев, [10.05.2023 23:28]\nhttps://ticket.belkacar.ru/ticket/11946409\nс166оа799\nСокольники\n\nДиспетчер 2, [10.05.2023 23:36]\n+\n\nАндрей Брегеда, [10.05.2023 23:37]\nhttps://ticket.belkacar.ru/ticket/11942493\nу498нт790\nВолжский\n\nДиспетчер 2, [10.05.2023 23:43]\n+\n\nТарас Казаков, [10.05.2023 23:47]\nhttps://ticket.belkacar.ru/ticket/11710844\nр499мн797\nТо Дубровка\n\nСузанна Гулиева😼, [10.05.2023 23:48]\nhttps://ticket.belkacar.ru/ticket/3WZGD7\nр487рм799\nШикана\n\nДенис ❤‍🔥 Смыслов, [11.05.2023 00:13]\nhttps://ticket.belkacar.ru/ticket/HLMUFR\nк839рн799 \nКулак\n\nСтанислав Чембулатов, [11.05.2023 00:15]\nhttps://ticket.belkacar.ru/ticket/11925182\nо223мс797\nВ офис\n\nДиспетчер 2, [11.05.2023 00:26]\n+\n\nБелугин Денис, [11.05.2023 00:27]\nhttps://ticket.belkacar.ru/ticket/11926288\nх092нс790 Шикана", "\n\n")
-//autos := make([]auto, len(s))
-//for i, subS := range s {
-//	split := strings.Split(subS, "\n")
-//	//fmt.Println(split)
-//	if len(split) > 2 {
-//		autos[i].mark = split[2]
-//	}
-//	if len(split) > 3 {
-//		autos[i].service = split[3]
-//		fmt.Println(autos[i].service)
-//	}
-//}
-//fmt.Println(autos)
+func (p *Parser) locationsPatterns() (patterns map[string][]string) {
+	patterns = make(map[string][]string)
+	file, err := os.Open("locations.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	byteArray, _ := io.ReadAll(file)
+
+	err = json.Unmarshal(byteArray, &patterns)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return patterns
+}
+
+func (p *Parser) Mail() (res Resource) {
+	return p.mail()
+}
+
+// Перегоны
+func (p *Parser) StretchesChat(updates []telego.Update) (res Resource) {
+	return p.stretchesChat(updates)
+}
+
+// 1C
+func (p *Parser) OneC(updates []telego.Update) (res Resource) {
+	return p.oneC(updates)
+}
+
+// любой телеграмм чат
+func (p *Parser) AnyChat(updates []telego.Update) (res Resource) {
+	return p.anyChat(updates, "")
+}

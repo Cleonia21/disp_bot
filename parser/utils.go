@@ -2,29 +2,22 @@ package parser
 
 import "regexp"
 
-func findMark(s string) string {
-	var re = regexp.MustCompile(`(?i)[авекмнорстух]\d{3}[авекмнорстух]{2}\d{2,3}`)
+func (p *Parser) findRegMark(s string) StateRegMark {
+	var re = regexp.MustCompile(p.stateMarkRegExp)
 	matches := re.FindStringSubmatch(s)
 	if matches != nil {
-		return matches[0]
+		return StateRegMark(matches[0])
 	}
 	return ""
 }
 
-func findService(s string) string {
-	var re = regexp.MustCompile(`(?i)(цкр)|(авторусь)`)
-	matches := re.FindStringSubmatch(s)
-	if matches != nil {
-		return matches[0]
+func (p *Parser) findLocation(s string) Location {
+	for location, regExpStr := range p.locationsRegExp {
+		re := regexp.MustCompile(regExpStr)
+		matches := re.FindStringSubmatch(s)
+		if matches != nil {
+			return Location(location)
+		}
 	}
 	return ""
-}
-
-func findTypeTM(s string) bool {
-	var re = regexp.MustCompile(`(?i)(Плановое ТО)`)
-	matches := re.FindStringSubmatch(s)
-	if matches != nil {
-		return true
-	}
-	return false
 }
