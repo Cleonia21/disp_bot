@@ -1,16 +1,15 @@
 package parser
 
 import (
-	"github.com/mymmrac/telego"
+	"disp_bot/telegram"
 	"strings"
 )
 
-func (p *Parser) stretchesChat(updates []telego.Update) (res Resource) {
+func (p *Parser) stretchesChat(messages []telegram.Message) (res Resource) {
 	res = make(Resource)
 
-	for _, update := range updates {
-		text := update.Message.Text
-		strs := strings.Split(text, "\n")
+	for _, mess := range messages {
+		strs := strings.Split(mess.Text(), "\n")
 		if len(strs) > 3 {
 			strs = strs[:3]
 		}

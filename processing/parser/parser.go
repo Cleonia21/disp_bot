@@ -1,8 +1,9 @@
 package parser
 
 import (
+	proc "disp_bot/processing"
+	"disp_bot/telegram"
 	"encoding/json"
-	"github.com/mymmrac/telego"
 	"io"
 	"log"
 	"os"
@@ -19,10 +20,23 @@ type Parser struct {
 	stateMarkRegExp string
 }
 
-func (p *Parser) Init() {
+func Init() *Parser {
+	p := &Parser{}
 	p.locationsRegExp = make(map[StateRegMark]string)
 	patterns := p.locationsPatterns()
 	p.fillLocationsRegExp(patterns)
+	return p
+}
+
+func (p *Parser) Parse(data proc.UnParsedData) proc.ParsedData {
+	parsedData := proc.ParsedData{
+		Chat47:        p.AnyChat(data.Chat47, ""),
+		ChatFlower:    p.AnyChat(data.ChatFlower, ""),
+		ChatStretches: p.stretchesChat(data.ChatStretches),
+		OneC:          p.oneC(data.OneC),
+		Mail:          p.Mail(),
+	}
+	return parsedData
 }
 
 func (p *Parser) fillStateMarkRegExp() {
@@ -61,16 +75,16 @@ func (p *Parser) Mail() (res Resource) {
 }
 
 // Перегоны
-func (p *Parser) StretchesChat(updates []telego.Update) (res Resource) {
-	return p.stretchesChat(updates)
+func (p *Parser) StretchesChat(mess []telegram.Message) (res Resource) {
+	return p.stretchesChat(mess)
 }
 
 // 1C
-func (p *Parser) OneC(updates []telego.Update) (res Resource) {
-	return p.oneC(updates)
+func (p *Parser) OneC(mess []telegram.Message) (res Resource) {
+	return p.oneC(mess)
 }
 
 // любой телеграмм чат
-func (p *Parser) AnyChat(updates []telego.Update) (res Resource) {
-	return p.anyChat(updates, "")
+func (p *Parser) AnyChat(mess []telegram.Message, loc Location) (res Resource) {
+	return p.anyChat(mess, loc)
 }

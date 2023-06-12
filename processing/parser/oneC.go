@@ -1,14 +1,12 @@
 package parser
 
-import (
-	"github.com/mymmrac/telego"
-)
+import "disp_bot/telegram"
 
-func (p *Parser) oneC(updates []telego.Update) (res Resource) {
+func (p *Parser) oneC(messages []telegram.Message) (res Resource) {
 	res = make(Resource)
 
-	for _, update := range updates {
-		text := update.Message.Text
+	for _, mess := range messages {
+		text := mess.Text()
 		stateRegMark := p.findRegMark(text)
 		location := p.findLocation(text)
 		if stateRegMark != "" && location != "" {

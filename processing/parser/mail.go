@@ -1,7 +1,7 @@
 package parser
 
 import (
-	mailReader "disp_bot/mail"
+	mailReader "disp_bot/processing/parser/mail"
 	"encoding/json"
 	"io"
 	"log"
@@ -15,7 +15,7 @@ type mailParam struct {
 }
 
 func getMailParam() (mailParam mailParam) {
-	file, err := os.Open("conf/mail.json")
+	file, err := os.Open("../../conf/mail.json")
 	if err != nil {
 		log.Fatal(err)
 	}
