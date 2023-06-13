@@ -2,7 +2,7 @@ package parser
 
 import (
 	mailReader "disp_bot/processing/parser/mail"
-	"disp_bot/telegram"
+	"disp_bot/utils"
 	"encoding/json"
 	"io"
 	"log"
@@ -31,7 +31,7 @@ func getMailParam() (mailParam mailParam) {
 	return mailParam
 }
 
-func (p *Parser) mail() (res []Resource) {
+func (p *Parser) mail() (res []utils.Resource) {
 	var Mail mailReader.Mail
 
 	param := getMailParam()
@@ -40,28 +40,28 @@ func (p *Parser) mail() (res []Resource) {
 
 	msgs := Mail.GetEmailMessages()
 
-	res = make([]Resource, 10)
+	res = make([]utils.Resource, 10)
 	for _, msg := range msgs {
 		stateRegMark := p.findRegMark(msg.Subject)
 		location := p.findLocation(msg.Body)
 		if stateRegMark != "" && location != "" {
-			res = append(res, Resource{
+			res = append(res, utils.Resource{
 				StRegMark: stateRegMark,
 				Loc:       location,
-				analyzed:  true,
-				mess:      telegram.NewMessage(msg.Subject + "\n" + msg.Body),
+				Analyzed:  true,
+				Mess:      utils.NewMessage(msg.Subject + "\n" + msg.Body),
 			})
 		} else if stateRegMark == "" {
-			res = append(res, Resource{
-				analyzed: false,
-				mess: telegram.NewMessage("Тема письма: " + msg.Subject + "\n" +
+			res = append(res, utils.Resource{
+				Analyzed: false,
+				Mess: utils.NewMessage("Тема письма: " + msg.Subject + "\n" +
 					"Тело письма: " + msg.Body + "\n" +
 					"Не распознан ГРЗ\n"),
 			})
 		} else if location == "" {
-			res = append(res, Resource{
-				analyzed: false,
-				mess: telegram.NewMessage("Тема письма: " + msg.Subject + "\n" +
+			res = append(res, utils.Resource{
+				Analyzed: false,
+				Mess: utils.NewMessage("Тема письма: " + msg.Subject + "\n" +
 					"Тело письма: " + msg.Body + "\n" +
 					"Не распознан сервис\n"),
 			})

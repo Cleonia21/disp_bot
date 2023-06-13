@@ -1,30 +1,8 @@
 package parser
 
 import (
-	"disp_bot/telegram"
+	"disp_bot/utils"
 )
-
-type Resource struct {
-	StRegMark string
-	Loc       string
-	analyzed  bool
-	mess      telegram.Message
-}
-
-type ParsedData struct {
-	Chat47        []Resource
-	ChatFlower    []Resource
-	OneC          []Resource
-	Mail          []Resource
-	ChatStretches []Resource
-}
-
-type UnParsedData struct {
-	Chat47        []telegram.Message
-	ChatFlower    []telegram.Message
-	OneC          []telegram.Message
-	ChatStretches []telegram.Message
-}
 
 type Parser struct {
 	locationsRegExp map[string]string
@@ -38,8 +16,8 @@ func Init() *Parser {
 	return p
 }
 
-func (p *Parser) Parse(data UnParsedData) ParsedData {
-	parsedData := ParsedData{
+func (p *Parser) Parse(data utils.UnParsedData) utils.ParsedData {
+	parsedData := utils.ParsedData{
 		Chat47:        p.anyChat(data.Chat47, ""),
 		ChatFlower:    p.anyChat(data.ChatFlower, ""),
 		ChatStretches: p.stretchesChat(data.ChatStretches),

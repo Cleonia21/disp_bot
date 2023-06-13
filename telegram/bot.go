@@ -1,7 +1,7 @@
 package telegram
 
 import (
-	proc "disp_bot/processing"
+	"disp_bot/utils"
 	"errors"
 	"fmt"
 	"github.com/mymmrac/telego"
@@ -15,11 +15,11 @@ type Bot struct {
 	tgGetChan  <-chan telego.Update
 	tgSendChan chan<- *telego.SendMessageParams
 
-	procGetChan  chan<- proc.UnProcData
-	procSendChan <-chan proc.ProcData
+	procGetChan  chan<- utils.UnProcData
+	procSendChan <-chan utils.ProcData
 }
 
-func Init(procGetChan chan<- proc.UnProcData, procSendChan <-chan proc.ProcData) *Bot {
+func Init(procGetChan chan<- utils.UnProcData, procSendChan <-chan utils.ProcData) *Bot {
 	b := &Bot{}
 	botToken := ""
 	b.messPacks = make(map[int64]*messagesPack)

@@ -1,19 +1,19 @@
 package parser
 
 import (
-	"disp_bot/telegram"
+	"disp_bot/utils"
 )
 
-func (p *Parser) anyChat(messages []telegram.Message, location string) (res []Resource) {
-	res = make([]Resource, 10)
+func (p *Parser) anyChat(messages []utils.Message, location string) (res []utils.Resource) {
+	res = make([]utils.Resource, 10)
 	for _, mess := range messages {
-		marks := p.findRegMarks(mess.Text())
+		marks := p.findRegMarks(mess.Text)
 		for _, mark := range marks {
-			res = append(res, Resource{
+			res = append(res, utils.Resource{
 				StRegMark: mark,
 				Loc:       location,
-				analyzed:  true,
-				mess:      mess,
+				Analyzed:  true,
+				Mess:      mess,
 			})
 		}
 	}

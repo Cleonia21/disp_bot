@@ -1,40 +1,40 @@
 package parser
 
 import (
-	"disp_bot/telegram"
+	"disp_bot/utils"
 	"strings"
 )
 
-func newResource(mark string, location string, message telegram.Message) Resource {
-	var res Resource
+func newResource(mark string, location string, message utils.Message) utils.Resource {
+	var res utils.Resource
 	if mark != "" && location != "" {
-		res = Resource{
+		res = utils.Resource{
 			StRegMark: mark,
 			Loc:       location,
-			analyzed:  true,
-			mess:      message,
+			Analyzed:  true,
+			Mess:      message,
 		}
 	} else if location != "" {
 		message.AddReply("Не распознан ГРЗ")
-		res = Resource{
-			analyzed: false,
-			mess:     message,
+		res = utils.Resource{
+			Analyzed: false,
+			Mess:     message,
 		}
 	} else if mark != "" {
 		message.AddReply("Не распознан сервис")
-		res = Resource{
-			analyzed: false,
-			mess:     message,
+		res = utils.Resource{
+			Analyzed: false,
+			Mess:     message,
 		}
 	}
 	return res
 }
 
-func (p *Parser) stretchesChat(messages []telegram.Message) (res []Resource) {
-	res = make([]Resource, 10)
+func (p *Parser) stretchesChat(messages []utils.Message) (res []utils.Resource) {
+	res = make([]utils.Resource, 10)
 
 	for _, mess := range messages {
-		strs := strings.Split(mess.Text(), "\n")
+		strs := strings.Split(mess.Text, "\n")
 		if len(strs) > 3 {
 			strs = strs[:3]
 		}

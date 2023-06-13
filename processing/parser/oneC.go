@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"disp_bot/telegram"
+	"disp_bot/utils"
 	"strings"
 )
 
@@ -13,21 +13,21 @@ func (p *Parser) rewriteLocation(str string, location string) string {
 	return location
 }
 
-func (p *Parser) oneC(messages []telegram.Message) (res []Resource) {
-	res = make([]Resource, 10)
+func (p *Parser) oneC(messages []utils.Message) (res []utils.Resource) {
+	res = make([]utils.Resource, 10)
 
 	var location string
 	for _, mess := range messages {
-		strs := strings.Split(mess.Text(), "\n")
+		strs := strings.Split(mess.Text, "\n")
 		for _, str := range strs {
 			location = p.rewriteLocation(str, location)
 			mark := p.findRegMark(str)
 			if location != "" && mark != "" {
-				res = append(res, Resource{
+				res = append(res, utils.Resource{
 					StRegMark: mark,
 					Loc:       location,
-					analyzed:  true,
-					mess:      mess,
+					Analyzed:  true,
+					Mess:      mess,
 				})
 			}
 		}

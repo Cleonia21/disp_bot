@@ -1,7 +1,7 @@
 package telegram
 
 import (
-	proc "disp_bot/processing"
+	"disp_bot/utils"
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 )
@@ -12,33 +12,15 @@ const (
 	ID_count
 )
 
-type Message struct {
-	id        int
-	text      string
-	replyText string
-}
-
-func NewMessage(text string) Message {
-	return Message{text: text}
-}
-
-func (m *Message) Text() string {
-	return m.text
-}
-
-func (m *Message) AddReply(text string) {
-	m.replyText += text
-}
-
 type messagesPack struct {
 	chatID     int64
 	procStatus int64
-	messages   map[int64][]Message
+	messages   map[int64][]utils.Message
 }
 
 func (mp *messagesPack) write(mess *telego.Message) {
 	messages := mp.messages[mp.procStatus]
-	messages = append(messages, Message{id: mess.MessageID, text: mess.Text})
+	messages = append(messages, utils.Message{ID: mess.MessageID, Text: mess.Text})
 	mp.messages[mp.procStatus] = messages
 }
 
@@ -57,12 +39,12 @@ func (b *Bot) messageHandler(mess *telego.Message) {
 	messPack := b.findMessPack(mess)
 	procStatus, tgStatus := b.getMessStatus(mess)
 
-	if procStatus != proc.ID_default {
+	if procStatus != utils.ID_default {
 		messPack.procStatus = procStatus
 	}
 
 	if tgStatus == ID_start {
-		if messPack.procStatus == proc.ID_default {
+		if messPack.procStatus == utils.ID_default {
 			_, _ = b.telegram.SendMessage(tu.Message(tu.ID(messPack.chatID), "ввод не распознан"))
 		} else {
 			messPack.write(mess)
@@ -70,7 +52,7 @@ func (b *Bot) messageHandler(mess *telego.Message) {
 	}
 	if tgStatus == ID_count {
 		b.sendPack(messPack)
-		messPack.procStatus = proc.ID_default
+		messPack.procStatus = utils.ID_default
 	}
 }
 
@@ -79,7 +61,7 @@ func (b *Bot) findMessPack(mess *telego.Message) *messagesPack {
 	if pack, ok := b.messPacks[chatID]; ok {
 		return pack
 	}
-	pack := &messagesPack{chatID: chatID, procStatus: proc.ID_default}
+	pack := &messagesPack{chatID: chatID, procStatus: utils.ID_default}
 	b.messPacks[chatID] = pack
 	return pack
 }
@@ -88,13 +70,13 @@ func (b *Bot) getMessStatus(mess *telego.Message) (procStatus int64, tgStatus in
 	text := mess.Text
 	switch text {
 	case "***47***":
-		return proc.ID_47, -1
+		return utils.ID_47, -1
 	case "***цветок***":
-		return proc.ID_flower, -1
+		return utils.ID_flower, -1
 	case "***1C***":
-		return proc.ID_oneC, -1
+		return utils.ID_oneC, -1
 	case "***перегоны***":
-		return proc.ID_stretches, -1
+		return utils.ID_stretches, -1
 	case "***анализ***":
 		return -1, ID_count
 	default:
@@ -103,7 +85,7 @@ func (b *Bot) getMessStatus(mess *telego.Message) (procStatus int64, tgStatus in
 }
 
 func (b *Bot) sendPack(pack *messagesPack) {
-	unProcPack := proc.UnProcData{
+	unProcPack := utils.UnProcData{
 		ID:        pack.chatID,
 		MessPacks: pack.messages,
 	}
