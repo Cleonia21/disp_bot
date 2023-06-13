@@ -23,10 +23,15 @@ func (p *Parser) oneC(messages []utils.Message) (res []utils.Resource) {
 			location = p.rewriteLocation(str, location)
 			mark := p.findRegMark(str)
 			if location != "" && mark != "" {
+				flagTO := false
+				if p.findTO(str) != "" {
+					flagTO = true
+				}
 				res = append(res, utils.Resource{
 					StRegMark: mark,
 					Loc:       location,
 					Analyzed:  true,
+					FlagTO:    flagTO,
 					Mess:      mess,
 				})
 			}

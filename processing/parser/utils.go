@@ -9,7 +9,7 @@ func (p *Parser) findRegMark(s string) string {
 	var re = regexp.MustCompile(p.stateMarkRegExp)
 	matches := re.FindStringSubmatch(s)
 	if matches != nil {
-		return string(matches[0])
+		return matches[0]
 	}
 	return ""
 }
@@ -22,6 +22,15 @@ func (p *Parser) findRegMarks(s string) (marks []string) {
 		}
 	}
 	return marks
+}
+
+func (p *Parser) findTO(s string) string {
+	var re = regexp.MustCompile(p.techServiceRegExp)
+	matches := re.FindStringSubmatch(s)
+	if matches != nil {
+		return matches[0]
+	}
+	return ""
 }
 
 func (p *Parser) findLocation(s string) string {

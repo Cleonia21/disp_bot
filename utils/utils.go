@@ -36,8 +36,10 @@ type UnProcData struct {
 type Resource struct {
 	StRegMark string
 	Loc       string
-	Analyzed  bool
-	Mess      Message
+	FlagTO    bool
+
+	Analyzed bool
+	Mess     Message
 }
 
 type ParsedData struct {

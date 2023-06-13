@@ -5,14 +5,16 @@ import (
 )
 
 type Parser struct {
-	locationsRegExp map[string]string
-	stateMarkRegExp string
+	locationsRegExp   map[string]string
+	stateMarkRegExp   string
+	techServiceRegExp string
 }
 
 func Init() *Parser {
 	p := &Parser{}
 	p.locationsRegExp = locationsRegExp()
 	p.stateMarkRegExp = stateMarkRegExp()
+	p.techServiceRegExp = techServiceRegExp()
 	return p
 }
 

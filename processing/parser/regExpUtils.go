@@ -12,6 +12,10 @@ func stateMarkRegExp() string {
 	return `(?i)[авекмнорстух]\d{3}[авекмнорстух]{2}\d{2,3}`
 }
 
+func techServiceRegExp() string {
+	return "Плановое ТО"
+}
+
 func locationsRegExp() (locationsRegExp map[string]string) {
 	locationsRegExp = make(map[string]string)
 	patterns := locationsPatterns()
@@ -21,7 +25,7 @@ func locationsRegExp() (locationsRegExp map[string]string) {
 		for _, location := range locations {
 			regStrs = append(regStrs, "("+location+")")
 		}
-		locationsRegExp[string(regMark)] = strings.Join(regStrs, "|")
+		locationsRegExp[regMark] = strings.Join(regStrs, "|")
 	}
 	return
 }

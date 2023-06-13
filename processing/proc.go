@@ -47,6 +47,6 @@ func (p *Proc) getData() {
 		}
 		parsedData := p.parser.Parse(unParsedData)
 		procData := p.analyzer.Analyze(parsedData)
-		p.sendChan <- utils.ProcData(procData)
+		p.sendChan <- procData
 	}
 }
