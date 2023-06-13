@@ -13,12 +13,21 @@ const (
 )
 
 type Message struct {
-	id   int
-	text string
+	id        int
+	text      string
+	replyText string
 }
 
-func (m Message) Text() string {
+func NewMessage(text string) Message {
+	return Message{text: text}
+}
+
+func (m *Message) Text() string {
 	return m.text
+}
+
+func (m *Message) AddReply(text string) {
+	m.replyText += text
 }
 
 type messagesPack struct {
@@ -29,7 +38,7 @@ type messagesPack struct {
 
 func (mp *messagesPack) write(mess *telego.Message) {
 	messages := mp.messages[mp.procStatus]
-	messages = append(messages, Message{mess.MessageID, mess.Text})
+	messages = append(messages, Message{id: mess.MessageID, text: mess.Text})
 	mp.messages[mp.procStatus] = messages
 }
 
