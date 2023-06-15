@@ -4,6 +4,7 @@ import (
 	mailReader "disp_bot/processing/parser/mail"
 	"disp_bot/utils"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -31,41 +32,49 @@ func getMailParam() (mailParam mailParam) {
 	return mailParam
 }
 
-func (p *Parser) mail() (res []utils.Resource) {
+func mailParse(mark string, location string, mess mailReader.EmailMessage) (
+	res utils.Resource,
+	unident utils.Message,
+	err error) {
+
+	if mark != "" && location != "" {
+		res = utils.Resource{
+			Loc:  location,
+			Mess: utils.NewMessage(mess.Subject + "\n" + mess.Body),
+		}
+	} else if location != "" {
+		unident = utils.NewMessage("Тема письма: " + mess.Subject + "\n" +
+			"Тело письма: " + mess.Body + "\n" +
+			"Не распознан ГРЗ\n")
+		err = errors.New("unident message")
+	} else if mark != "" {
+		unident = utils.NewMessage("Тема письма: " + mess.Subject + "\n" +
+			"Тело письма: " + mess.Body + "\n" +
+			"Не распознан сервис\n")
+		err = errors.New("unident message")
+	}
+	return res, unident, err
+}
+
+func (p *Parser) mail() (resces map[string]utils.Resource, unidents []utils.Message) {
 	var Mail mailReader.Mail
 
 	param := getMailParam()
 	Mail.Connect(param.Addr, param.UserName, param.Password)
 	defer Mail.Close()
+	messages := Mail.GetEmailMessages()
 
-	msgs := Mail.GetEmailMessages()
+	resces = make(map[string]utils.Resource, 10)
+	for _, mess := range messages {
+		mark := p.findRegMark(mess.Subject)
+		location := p.findLocation(mess.Body)
 
-	res = make([]utils.Resource, 10)
-	for _, msg := range msgs {
-		stateRegMark := p.findRegMark(msg.Subject)
-		location := p.findLocation(msg.Body)
-		if stateRegMark != "" && location != "" {
-			res = append(res, utils.Resource{
-				StRegMark: stateRegMark,
-				Loc:       location,
-				Analyzed:  true,
-				Mess:      utils.NewMessage(msg.Subject + "\n" + msg.Body),
-			})
-		} else if stateRegMark == "" {
-			res = append(res, utils.Resource{
-				Analyzed: false,
-				Mess: utils.NewMessage("Тема письма: " + msg.Subject + "\n" +
-					"Тело письма: " + msg.Body + "\n" +
-					"Не распознан ГРЗ\n"),
-			})
-		} else if location == "" {
-			res = append(res, utils.Resource{
-				Analyzed: false,
-				Mess: utils.NewMessage("Тема письма: " + msg.Subject + "\n" +
-					"Тело письма: " + msg.Body + "\n" +
-					"Не распознан сервис\n"),
-			})
+		res, unident, err := mailParse(mark, location, mess)
+		if err == nil {
+			resces[mark] = res
+		} else {
+			unidents = append(unidents, unident)
 		}
 	}
-	return res
+	return resces, unidents
 }

@@ -34,20 +34,18 @@ type UnProcData struct {
 }
 
 type Resource struct {
-	StRegMark string
-	Loc       string
-	FlagTO    bool
-
-	Analyzed bool
-	Mess     Message
+	Loc  string
+	Mess Message
 }
 
 type ParsedData struct {
-	Chat47        []Resource
-	ChatFlower    []Resource
-	OneC          []Resource
-	Mail          []Resource
-	ChatStretches []Resource
+	Chat47        map[string]Resource
+	ChatFlower    map[string]Resource
+	OneCto        map[string]Resource
+	OneCRepair    map[string]Resource
+	Mail          map[string]Resource
+	ChatStretches map[string]Resource
+	Unidentified  []Message
 }
 
 type UnParsedData struct {

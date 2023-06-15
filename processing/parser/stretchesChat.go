@@ -2,37 +2,36 @@ package parser
 
 import (
 	"disp_bot/utils"
+	"errors"
 	"strings"
 )
 
-func newResource(mark string, location string, message utils.Message) utils.Resource {
-	var res utils.Resource
+func strechChatParse(mark string, location string, message utils.Message) (
+	res utils.Resource,
+	unident utils.Message,
+	err error) {
+
 	if mark != "" && location != "" {
 		res = utils.Resource{
-			StRegMark: mark,
-			Loc:       location,
-			Analyzed:  true,
-			Mess:      message,
+			Loc:  location,
+			Mess: message,
 		}
 	} else if location != "" {
 		message.AddReply("Не распознан ГРЗ")
-		res = utils.Resource{
-			Analyzed: false,
-			Mess:     message,
-		}
+		unident = message
+		err = errors.New("unident GR mark")
 	} else if mark != "" {
 		message.AddReply("Не распознан сервис")
-		res = utils.Resource{
-			Analyzed: false,
-			Mess:     message,
-		}
+		unident = message
+		err = errors.New("unident service")
 	}
-	return res
+	return res, unident, err
 }
 
-func (p *Parser) stretchesChat(messages []utils.Message) (res []utils.Resource) {
-	res = make([]utils.Resource, 10)
+func (p *Parser) stretchesChat(messages []utils.Message) (
+	resces map[string]utils.Resource, unidents []utils.Message) {
 
+	resces = make(map[string]utils.Resource, 10)
 	for _, mess := range messages {
 		strs := strings.Split(mess.Text, "\n")
 		if len(strs) > 3 {
@@ -42,7 +41,12 @@ func (p *Parser) stretchesChat(messages []utils.Message) (res []utils.Resource) 
 
 		mark := p.findRegMark(str)
 		location := p.findLocation(str)
-		res = append(res, newResource(mark, location, mess))
+		res, unident, err := strechChatParse(mark, location, mess)
+		if err == nil {
+			resces[mark] = res
+		} else {
+			unidents = append(unidents, unident)
+		}
 	}
-	return res
+	return resces, unidents
 }

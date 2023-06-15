@@ -19,12 +19,20 @@ func Init() *Parser {
 }
 
 func (p *Parser) Parse(data utils.UnParsedData) utils.ParsedData {
-	parsedData := utils.ParsedData{
-		Chat47:        p.anyChat(data.Chat47, ""),
-		ChatFlower:    p.anyChat(data.ChatFlower, ""),
-		ChatStretches: p.stretchesChat(data.ChatStretches),
-		OneC:          p.oneC(data.OneC),
-		Mail:          p.mail(),
-	}
+	parsedData := utils.ParsedData{}
+	unidentified := make([]utils.Message, 10)
+
+	parsedData.Chat47 = p.anyChat(data.Chat47, "")
+	parsedData.ChatFlower = p.anyChat(data.ChatFlower, "")
+	parsedData.OneCto, parsedData.OneCRepair = p.oneC(data.OneC)
+
+	var unidents []utils.Message
+	parsedData.ChatStretches, unidents = p.stretchesChat(data.ChatStretches)
+	unidentified = append(unidentified, unidents...)
+	parsedData.Mail, unidents = p.mail()
+	unidentified = append(unidentified, unidents...)
+
+	parsedData.Unidentified = unidentified
+
 	return parsedData
 }

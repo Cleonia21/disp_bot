@@ -13,8 +13,9 @@ func (p *Parser) rewriteLocation(str string, location string) string {
 	return location
 }
 
-func (p *Parser) oneC(messages []utils.Message) (res []utils.Resource) {
-	res = make([]utils.Resource, 10)
+func (p *Parser) oneC(messages []utils.Message) (to, repair map[string]utils.Resource) {
+	to = make(map[string]utils.Resource, 10)
+	repair = make(map[string]utils.Resource, 10)
 
 	var location string
 	for _, mess := range messages {
@@ -23,19 +24,19 @@ func (p *Parser) oneC(messages []utils.Message) (res []utils.Resource) {
 			location = p.rewriteLocation(str, location)
 			mark := p.findRegMark(str)
 			if location != "" && mark != "" {
-				flagTO := false
 				if p.findTO(str) != "" {
-					flagTO = true
+					to[mark] = utils.Resource{
+						Loc:  location,
+						Mess: mess,
+					}
+				} else {
+					repair[mark] = utils.Resource{
+						Loc:  location,
+						Mess: mess,
+					}
 				}
-				res = append(res, utils.Resource{
-					StRegMark: mark,
-					Loc:       location,
-					Analyzed:  true,
-					FlagTO:    flagTO,
-					Mess:      mess,
-				})
 			}
 		}
 	}
-	return res
+	return
 }
