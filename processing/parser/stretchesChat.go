@@ -8,7 +8,7 @@ import (
 
 func strechChatParse(mark string, location string, message utils.Message) (
 	res utils.Resource,
-	unident utils.Message,
+	unIdent utils.Message,
 	err error) {
 
 	if mark != "" && location != "" {
@@ -18,35 +18,45 @@ func strechChatParse(mark string, location string, message utils.Message) (
 		}
 	} else if location != "" {
 		message.AddReply("Не распознан ГРЗ")
-		unident = message
+		unIdent = message
 		err = errors.New("unident GR mark")
 	} else if mark != "" {
 		message.AddReply("Не распознан сервис")
-		unident = message
+		unIdent = message
 		err = errors.New("unident service")
 	}
-	return res, unident, err
+	return res, unIdent, err
+}
+
+func (p *Parser) removeURL(strs []string) (editedStrs []string) {
+	for _, s := range strs {
+		if p.findURL(s) == false {
+			editedStrs = append(editedStrs, s)
+		}
+	}
+	return editedStrs
 }
 
 func (p *Parser) stretchesChat(messages []utils.Message) (
-	resces map[string]utils.Resource, unidents []utils.Message) {
+	resces map[string]utils.Resource, unIdents []utils.Message) {
 
 	resces = make(map[string]utils.Resource, 10)
 	for _, mess := range messages {
 		strs := strings.Split(mess.Text, "\n")
+		strs = p.removeURL(strs)
 		if len(strs) > 3 {
 			strs = strs[:3]
 		}
 		str := strings.Join(strs, "\n")
 
-		mark := p.findRegMark(str)
+		mark := p.findMark(str)
 		location := p.findLocation(str)
 		res, unident, err := strechChatParse(mark, location, mess)
 		if err == nil {
 			resces[mark] = res
 		} else {
-			unidents = append(unidents, unident)
+			unIdents = append(unIdents, unident)
 		}
 	}
-	return resces, unidents
+	return resces, unIdents
 }

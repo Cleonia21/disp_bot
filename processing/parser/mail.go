@@ -66,7 +66,7 @@ func (p *Parser) mail() (resces map[string]utils.Resource, unidents []utils.Mess
 
 	resces = make(map[string]utils.Resource, 10)
 	for _, mess := range messages {
-		mark := p.findRegMark(mess.Subject)
+		mark := p.findMark(mess.Subject)
 		location := p.findLocation(mess.Body)
 
 		res, unident, err := mailParse(mark, location, mess)

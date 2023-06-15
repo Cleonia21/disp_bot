@@ -22,9 +22,9 @@ func (p *Parser) oneC(messages []utils.Message) (to, repair map[string]utils.Res
 		strs := strings.Split(mess.Text, "\n")
 		for _, str := range strs {
 			location = p.rewriteLocation(str, location)
-			mark := p.findRegMark(str)
+			mark := p.findMark(str)
 			if location != "" && mark != "" {
-				if p.findTO(str) != "" {
+				if p.findTO(str) {
 					to[mark] = utils.Resource{
 						Loc:  location,
 						Mess: mess,

@@ -2,19 +2,36 @@ package parser
 
 import (
 	"disp_bot/utils"
+	"log"
+	"regexp"
 )
 
 type Parser struct {
-	locationsRegExp   map[string]string
-	stateMarkRegExp   string
-	techServiceRegExp string
+	locationsRegExp   map[string]*regexp.Regexp
+	stateMarkRegExp   *regexp.Regexp
+	techServiceRegExp *regexp.Regexp
+	urlRegExp         *regexp.Regexp
 }
 
 func Init() *Parser {
 	p := &Parser{}
-	p.locationsRegExp = locationsRegExp()
-	p.stateMarkRegExp = stateMarkRegExp()
-	p.techServiceRegExp = techServiceRegExp()
+	var err error
+	p.locationsRegExp, err = locationsRegExp()
+	if err != nil {
+		log.Println(err)
+	}
+	p.stateMarkRegExp, err = stateMarkRegExp()
+	if err != nil {
+		log.Println(err)
+	}
+	p.techServiceRegExp, err = techServiceRegExp()
+	if err != nil {
+		log.Println(err)
+	}
+	p.urlRegExp, err = urlRegExp()
+	if err != nil {
+		log.Println(err)
+	}
 	return p
 }
 

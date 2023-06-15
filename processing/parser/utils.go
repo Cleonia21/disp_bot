@@ -9,70 +9,69 @@ import (
 	"strings"
 )
 
-func (p *Parser) findRegMark(s string) string {
-	var re = regexp.MustCompile(p.stateMarkRegExp)
-	matches := re.FindStringSubmatch(s)
+func (p *Parser) findMark(s string) string {
+	matches := p.stateMarkRegExp.FindStringSubmatch(s)
 	if matches != nil {
-		return matches[0]
+		return strings.ToLower(matches[0])
 	}
 	return ""
 }
 
-func (p *Parser) findRegMarks(s string) (marks []string) {
-	strs := strings.Split(s, "\n")
-	for _, str := range strs {
-		if mark := p.findRegMark(str); mark != "" {
-			marks = append(marks, mark)
-		}
+func (p *Parser) findMarks(s string) (marks []string) {
+	matches := p.stateMarkRegExp.FindAllString(s, -1)
+	for i := range matches {
+		matches[i] = strings.ToLower(matches[i])
 	}
-	return marks
+	return matches
 }
 
-func (p *Parser) findTO(s string) string {
-	var re = regexp.MustCompile(p.techServiceRegExp)
-	matches := re.FindStringSubmatch(s)
-	if matches != nil {
-		return matches[0]
-	}
-	return ""
+func (p *Parser) findTO(s string) bool {
+	return p.techServiceRegExp.FindStringSubmatch(s) != nil
 }
 
 func (p *Parser) findLocation(s string) string {
-	for location, regExpStr := range p.locationsRegExp {
-		re := regexp.MustCompile(regExpStr)
-		matches := re.FindStringSubmatch(s)
-		if matches != nil {
-			return string(location)
+	for location, regExp := range p.locationsRegExp {
+		if regExp.MatchString(s) {
+			return location
 		}
 	}
 	return ""
 }
 
-func stateMarkRegExp() string {
-	return `(?i)[авекмнорстух]\d{3}[авекмнорстух]{2}\d{2,3}`
+func (p *Parser) findURL(s string) bool {
+	return p.urlRegExp.MatchString(s)
 }
 
-func techServiceRegExp() string {
-	return "Плановое ТО"
+func stateMarkRegExp() (*regexp.Regexp, error) {
+	return regexp.Compile(`(?i)[авекмнорстух]\d{3}[авекмнорстух]{2}\d{2,3}`)
 }
 
-func locationsRegExp() (locationsRegExp map[string]string) {
-	locationsRegExp = make(map[string]string)
+func techServiceRegExp() (*regexp.Regexp, error) {
+	return regexp.Compile(`(?i)плановое то`)
+}
+
+func urlRegExp() (*regexp.Regexp, error) {
+	return regexp.Compile(`(?i)(?:https?|ftp):\/\/[\n\S]+`)
+}
+
+func locationsRegExp() (locationsRegExp map[string]*regexp.Regexp, err error) {
+	locationsRegExp = make(map[string]*regexp.Regexp)
 	patterns := locationsPatterns()
 
 	for regMark, locations := range patterns {
-		var regStrs []string
-		for _, location := range locations {
-			regStrs = append(regStrs, "("+location+")")
+		body := strings.Join(locations, `|`)
+		reg, err := regexp.Compile(`(?i)` + body)
+		if err != nil {
+			return locationsRegExp, err
 		}
-		locationsRegExp[regMark] = strings.Join(regStrs, "|")
+		locationsRegExp[regMark] = reg
 	}
 	return
 }
 
 func locationsPatterns() (patterns map[string][]string) {
 	patterns = make(map[string][]string)
-	file, err := os.Open("locations.json")
+	file, err := os.Open("conf/locations.json")
 	if err != nil {
 		log.Fatal(err)
 	}
