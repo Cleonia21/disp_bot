@@ -24,18 +24,7 @@ func (mp *messagesPack) write(mess *telego.Message) {
 	mp.messages[mp.procStatus] = messages
 }
 
-func (b *Bot) tgHandler() {
-	// Loop through all tgGetChan when they came
-	for update := range b.tgGetChan {
-		if update.Message == nil {
-			continue
-		}
-		//update.Message.From.ID
-		b.messageHandler(update.Message)
-	}
-}
-
-func (b *Bot) messageHandler(mess *telego.Message) {
+func (b *Bot) handler(mess *telego.Message) {
 	messPack := b.findMessPack(mess)
 	procStatus, tgStatus := b.getMessStatus(mess)
 
@@ -51,9 +40,24 @@ func (b *Bot) messageHandler(mess *telego.Message) {
 		}
 	}
 	if tgStatus == ID_count {
-		b.sendPack(messPack)
+		go b.processing(messPack)
 		messPack.procStatus = utils.ID_default
 	}
+}
+
+func (b *Bot) processing(pack *messagesPack) {
+	unProcPack := utils.UnProcData{
+		ID:        pack.chatID,
+		MessPacks: pack.messages,
+	}
+	procData := b.proc.Processing(&unProcPack)
+	for _, msg := range procData.MessPacks {
+		b.sendCustomMsg(procData.ID, &msg)
+	}
+}
+
+func (b *Bot) sendCustomMsg(chatID int64, msg *utils.Message) {
+
 }
 
 func (b *Bot) findMessPack(mess *telego.Message) *messagesPack {
@@ -82,12 +86,4 @@ func (b *Bot) getMessStatus(mess *telego.Message) (procStatus int64, tgStatus in
 	default:
 		return -1, ID_start
 	}
-}
-
-func (b *Bot) sendPack(pack *messagesPack) {
-	unProcPack := utils.UnProcData{
-		ID:        pack.chatID,
-		MessPacks: pack.messages,
-	}
-	b.procGetChan <- unProcPack
 }
