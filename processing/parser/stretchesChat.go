@@ -2,61 +2,60 @@ package parser
 
 import (
 	"disp_bot/utils"
-	"errors"
 	"strings"
 )
-
-func strechChatParse(mark string, location string, message utils.Message) (
-	res utils.Resource,
-	unIdent utils.Message,
-	err error) {
-
-	if mark != "" && location != "" {
-		res = utils.Resource{
-			Loc:  location,
-			Mess: message,
-		}
-	} else if location != "" {
-		message.AddReply("Не распознан ГРЗ")
-		unIdent = message
-		err = errors.New("unident GR mark")
-	} else if mark != "" {
-		message.AddReply("Не распознан сервис")
-		unIdent = message
-		err = errors.New("unident service")
-	}
-	return res, unIdent, err
-}
-
-func (p *Parser) removeURL(strs []string) (editedStrs []string) {
-	for _, s := range strs {
-		if p.findURL(s) == false {
-			editedStrs = append(editedStrs, s)
-		}
-	}
-	return editedStrs
-}
 
 func (p *Parser) stretchesChat(messages []utils.Message) (
 	resces map[string]utils.Resource, unIdents []utils.Message) {
 
 	resces = make(map[string]utils.Resource, 10)
-	for _, mess := range messages {
-		strs := strings.Split(mess.Text, "\n")
-		strs = p.removeURL(strs)
-		if len(strs) > 3 {
-			strs = strs[:3]
-		}
-		str := strings.Join(strs, "\n")
-
+	for _, msg := range messages {
+		str := removeUnprocPart(msg.Text)
+		str = p.removeURL(str)
 		mark := p.findMark(str)
 		location := p.findLocation(str)
-		res, unident, err := strechChatParse(mark, location, mess)
-		if err == nil {
-			resces[mark] = res
+		replyText := identify(mark, location)
+		if replyText == "" {
+			resces[mark] = utils.Resource{
+				Loc:  location,
+				Mess: msg,
+			}
 		} else {
-			unIdents = append(unIdents, unident)
+			msg.AddReply(replyText)
+			unIdents = append(unIdents, msg)
 		}
 	}
 	return resces, unIdents
+}
+
+func removeUnprocPart(str string) (procPart string) {
+	strs := strings.Split(str, "\n")
+	if len(strs) > 3 {
+		strs = strs[:3]
+	}
+	procPart = strings.Join(strs, "\n")
+	return procPart
+}
+
+func (p *Parser) removeURL(str string) (editedStr string) {
+	strs := strings.Split(str, "\n")
+	var bufStrs []string
+	for _, s := range strs {
+		if p.findURL(s) == false {
+			bufStrs = append(bufStrs, s)
+		}
+	}
+	editedStr = strings.Join(bufStrs, "\n")
+	return editedStr
+}
+
+func identify(mark string, loc string) (replyText string) {
+	if loc != "" && mark == "" {
+		replyText = "Не распознан ГРЗ"
+	} else if loc == "" && mark != "" {
+		replyText = "Не распознан сервис"
+	} else if loc == "" && mark == "" {
+		replyText = "Сообщение не распознано"
+	}
+	return replyText
 }
