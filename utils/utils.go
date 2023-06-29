@@ -28,11 +28,6 @@ type ProcData struct {
 	MessPacks []Message
 }
 
-type UnProcData struct {
-	ID        int64
-	MessPacks map[int64][]Message
-}
-
 type Resource struct {
 	Loc  string
 	Mess Message

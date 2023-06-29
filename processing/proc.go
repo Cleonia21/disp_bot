@@ -6,6 +6,29 @@ import (
 	"disp_bot/utils"
 )
 
+type MailConf struct {
+	UserName string
+	Pass     string
+}
+
+type Checks struct {
+	Chat47        bool
+	ChatFlower    bool
+	OneC          bool
+	ChatStretches bool
+	Mail          bool
+}
+
+type UnProcData struct {
+	ID        int64
+	MessPacks map[int64][]Message
+
+	ProcConf struct {
+		Checks   Checks
+		MailConf MailConf
+	}
+}
+
 type Proc struct {
 	parser   *parser.Parser
 	analyzer *analyzer.Analyzer

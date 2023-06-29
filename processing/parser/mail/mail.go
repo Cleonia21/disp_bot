@@ -183,7 +183,7 @@ func (m *Mail) GetEmailMessages() (emailMsgs []EmailMessage) {
 			done <- m.client.Fetch(seqSet, items, messages)
 		}()
 
-		log.Println("Messages for date:")
+		//log.Println("Messages for date:")
 		for msg := range messages {
 			emailMsgs = append(emailMsgs, m.processMsg(msg, &section))
 		}

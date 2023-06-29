@@ -17,7 +17,7 @@ type mailParam struct {
 }
 
 func getMailParam() (mailParam mailParam) {
-	file, err := os.Open("../../conf/mail.json")
+	file, err := os.Open("conf/mail.json")
 	if err != nil {
 		log.Fatal(err)
 	}
