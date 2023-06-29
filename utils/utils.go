@@ -13,6 +13,7 @@ type Message struct {
 	ID        int
 	Text      string
 	ReplyText string
+	From      int
 }
 
 func NewMessage(text string) Message {
@@ -24,8 +25,20 @@ func (m *Message) AddReply(text string) {
 }
 
 type ProcData struct {
-	ID        int64
 	MessPacks []Message
+}
+
+type UnProcData struct {
+	MessPacks map[int64][]Message
+	Checks    Checks
+}
+
+type Checks struct {
+	Chat47        bool
+	ChatFlower    bool
+	OneC          bool
+	ChatStretches bool
+	Mail          bool
 }
 
 type Resource struct {
@@ -48,4 +61,5 @@ type UnParsedData struct {
 	ChatFlower    []Message
 	OneC          []Message
 	ChatStretches []Message
+	Checks        Checks
 }
