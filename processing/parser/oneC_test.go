@@ -99,7 +99,7 @@ import (
 
 func TestParser_oneC(t *testing.T) {
 	text1 := "АВТО ЛИГА. ул Кулаков пер.д 6\n" +
-		"1  ;к293еа790/XW8ZZZ61ZLG026098/Polo/134 234/У авто сломан замок багажника, удалось багажник закрыть и он не открывается. Горит индикация открытого багажника и авто не закрывается;\n" +
+		"1  ;к293еа790/XW8ZZZ61ZLG026098/Polo/134 234/ 47 47 47 У авто сломан замок багажника, удалось багажник закрыть и он не открывается. Горит индикация открытого багажника и авто не закрывается;\n" +
 		"2  ;н102мс797/LVTDB21B4ND333680/LX/9 906/масло вытекло, мотор предыдущий бзер заводил в таком состоянии;\n" +
 		"АВТОЛАЙТ.Полбина 29,с1\n" +
 		"1  ;т637мх797/XZGEE04A0NA820320/Jolion/40 832/Переднее окно не реагирует на нажатие кнопки все окна работают кроме водительского,при нажатии на кнопку щелкает но не опускает и не поднимает;\n" +
@@ -114,50 +114,44 @@ func TestParser_oneC(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		wantTo     map[string]utils.Resource
-		wantRepair map[string]utils.Resource
+		wantTo     map[string]utils.Message
+		wantRepair map[string]utils.Message
 	}{
 		{
 			name: "",
 			args: args{messages: []utils.Message{{Text: text1}, {Text: text2}}},
-			wantTo: map[string]utils.Resource{
+			wantTo: map[string]utils.Message{
 				"а626мс797": {
-					Loc: "47",
-					Mess: utils.Message{
-						Text: text1,
-					},
+					Loc:  "47",
+					Text: "text from 1C",
+					Mark: "а626мс797",
 				},
 				"в383ну790": {
-					Loc: "47",
-					Mess: utils.Message{
-						Text: text1,
-					},
+					Loc:  "47",
+					Text: "text from 1C",
+					Mark: "в383ну790",
 				},
 				"к340ет790": {
-					Loc: "47",
-					Mess: utils.Message{
-						Text: text2,
-					},
+					Loc:  "47",
+					Text: "text from 1C",
+					Mark: "к340ет790",
 				},
 			},
-			wantRepair: map[string]utils.Resource{
+			wantRepair: map[string]utils.Message{
 				"к293еа790": {
-					Loc: "кулак",
-					Mess: utils.Message{
-						Text: text1,
-					},
+					Loc:  "кулак",
+					Mark: "к293еа790",
+					Text: "text from 1C",
 				},
 				"н102мс797": {
-					Loc: "кулак",
-					Mess: utils.Message{
-						Text: text1,
-					},
+					Loc:  "кулак",
+					Mark: "н102мс797",
+					Text: "text from 1C",
 				},
 				"т637мх797": {
-					Loc: "полбина",
-					Mess: utils.Message{
-						Text: text1,
-					},
+					Loc:  "полбина",
+					Mark: "т637мх797",
+					Text: "text from 1C",
 				},
 			},
 		},

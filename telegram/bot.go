@@ -32,7 +32,7 @@ func Init() *Bot {
 		os.Exit(1)
 	}
 
-	b.proc = processing.Init()
+	b.proc = processing.Init(true)
 	return b
 }
 

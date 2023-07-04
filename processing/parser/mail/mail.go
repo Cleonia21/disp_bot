@@ -152,12 +152,12 @@ func (m *Mail) emailMsgSubject(reader *mail.Reader) string {
 func (m *Mail) processMsg(msg *imap.Message, section *imap.BodySectionName) (emailMsg EmailMessage) {
 	r := msg.GetBody(section)
 	if r == nil {
-		log.Fatal("Server didn't returned message body")
+		log.Print("Server didn't returned message body")
 	}
 
 	reader, err := mail.CreateReader(r)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 
 	emailMsg.Subject = m.emailMsgSubject(reader)

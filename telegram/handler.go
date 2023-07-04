@@ -14,14 +14,8 @@ const (
 
 type messagesPack struct {
 	chatID     int64
-	procStatus int64
-	messages   map[int64][]utils.Message
-}
-
-func (mp *messagesPack) write(mess *telego.Message) {
-	messages := mp.messages[mp.procStatus]
-	messages = append(messages, utils.Message{ID: mess.MessageID, Text: mess.Text})
-	mp.messages[mp.procStatus] = messages
+	procStatus int
+	messages   []utils.Message
 }
 
 func (b *Bot) handler(mess *telego.Message) {
@@ -36,28 +30,13 @@ func (b *Bot) handler(mess *telego.Message) {
 		if messPack.procStatus == utils.ID_default {
 			_, _ = b.telegram.SendMessage(tu.Message(tu.ID(messPack.chatID), "ввод не распознан"))
 		} else {
-			messPack.write(mess)
+			messPack.save(mess)
 		}
 	}
 	if tgStatus == ID_count {
 		go b.processing(messPack)
 		messPack.procStatus = utils.ID_default
 	}
-}
-
-func (b *Bot) processing(pack *messagesPack) {
-	unProcPack := utils.UnProcData{
-		ID:        pack.chatID,
-		MessPacks: pack.messages,
-	}
-	procData := b.proc.Processing(&unProcPack)
-	for _, msg := range procData.MessPacks {
-		b.sendCustomMsg(procData.ID, &msg)
-	}
-}
-
-func (b *Bot) sendCustomMsg(chatID int64, msg *utils.Message) {
-
 }
 
 func (b *Bot) findMessPack(mess *telego.Message) *messagesPack {
@@ -70,7 +49,7 @@ func (b *Bot) findMessPack(mess *telego.Message) *messagesPack {
 	return pack
 }
 
-func (b *Bot) getMessStatus(mess *telego.Message) (procStatus int64, tgStatus int64) {
+func (b *Bot) getMessStatus(mess *telego.Message) (procStatus int, tgStatus int64) {
 	text := mess.Text
 	switch text {
 	case "***47***":
@@ -86,4 +65,31 @@ func (b *Bot) getMessStatus(mess *telego.Message) (procStatus int64, tgStatus in
 	default:
 		return -1, ID_start
 	}
+}
+
+func (mp *messagesPack) save(mess *telego.Message) {
+	customMsg := utils.Message{
+		ID:   mess.MessageID,
+		Text: mess.Text,
+		From: mp.procStatus,
+	}
+	mp.messages = append(mp.messages, customMsg)
+}
+
+func (b *Bot) processing(pack *messagesPack) {
+	msgs := b.proc.Processing(pack.messages, utils.Conf{
+		Chat47:        true,
+		ChatFlower:    true,
+		OneC:          true,
+		ChatStretches: true,
+		Mail:          true,
+	})
+
+	for _, msg := range msgs {
+		b.sendCustomMsg(pack.chatID, &msg)
+	}
+}
+
+func (b *Bot) sendCustomMsg(chatID int64, msg *utils.Message) {
+
 }

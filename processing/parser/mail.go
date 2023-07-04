@@ -16,8 +16,8 @@ type mailParam struct {
 	Password string `json:"Password"`
 }
 
-func getMailParam() (mailParam mailParam) {
-	file, err := os.Open("conf/mail.json")
+func getMailParam(confPath string) (mailParam mailParam) {
+	file, err := os.Open(confPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,49 +32,39 @@ func getMailParam() (mailParam mailParam) {
 	return mailParam
 }
 
-func mailParse(mark string, location string, mess mailReader.EmailMessage) (
-	res utils.Resource,
-	unident utils.Message,
-	err error) {
-
-	if mark != "" && location != "" {
-		res = utils.Resource{
-			Loc:  location,
-			Mess: utils.NewMessage(mess.Subject + "\n" + mess.Body),
-		}
-	} else if location != "" {
-		unident = utils.NewMessage("Тема письма: " + mess.Subject + "\n" +
-			"Тело письма: " + mess.Body + "\n" +
-			"Не распознан ГРЗ\n")
-		err = errors.New("unident message")
-	} else if mark != "" {
-		unident = utils.NewMessage("Тема письма: " + mess.Subject + "\n" +
-			"Тело письма: " + mess.Body + "\n" +
-			"Не распознан сервис\n")
-		err = errors.New("unident message")
+func mailParse(mark string, location string, mailMsg mailReader.EmailMessage) (msg utils.Message, err error) {
+	msg = utils.Message{
+		Text: "Тема письма: " + mailMsg.Subject + "\n" + "Тело письма: " + mailMsg.Body,
+		Loc:  location,
+		Mark: mark,
 	}
-	return res, unident, err
+	if location != "" && mark != "" {
+		return
+	}
+	msg.AddReply("не распознаны грз или сервис")
+	err = errors.New("unident message")
+	return
 }
 
-func (p *Parser) mail() (resces map[string]utils.Resource, unidents []utils.Message) {
+func (p *Parser) mail(confPath string) (resces map[string]utils.Message, undef []utils.Message) {
 	var Mail mailReader.Mail
 
-	param := getMailParam()
+	param := getMailParam(confPath)
 	Mail.Connect(param.Addr, param.UserName, param.Password)
 	defer Mail.Close()
-	messages := Mail.GetEmailMessages()
+	mailMsgs := Mail.GetEmailMessages()
 
-	resces = make(map[string]utils.Resource, 10)
-	for _, mess := range messages {
-		mark := p.findMark(mess.Subject)
-		location := p.findLocation(mess.Body)
+	resces = make(map[string]utils.Message, 10)
+	for _, mailMsg := range mailMsgs {
+		mark := p.findMark(mailMsg.Subject)
+		location := p.findLocation(mailMsg.Body)
 
-		res, unident, err := mailParse(mark, location, mess)
+		msg, err := mailParse(mark, location, mailMsg)
 		if err == nil {
-			resces[mark] = res
+			resces[mark] = msg
 		} else {
-			unidents = append(unidents, unident)
+			undef = append(undef, msg)
 		}
 	}
-	return resces, unidents
+	return resces, undef
 }

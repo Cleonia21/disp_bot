@@ -6,6 +6,9 @@ import (
 )
 
 func (p *Parser) rewriteLocation(str string, location string) string {
+	if p.findOneCStretches(str) {
+		return location
+	}
 	newLocation := p.findLocation(str)
 	if newLocation != "" {
 		location = newLocation
@@ -13,27 +16,25 @@ func (p *Parser) rewriteLocation(str string, location string) string {
 	return location
 }
 
-func (p *Parser) oneC(messages []utils.Message) (to, repair map[string]utils.Resource) {
-	to = make(map[string]utils.Resource, 10)
-	repair = make(map[string]utils.Resource, 10)
+func (p *Parser) oneC(messages []utils.Message) (to, repair map[string]utils.Message) {
+	to = make(map[string]utils.Message, 10)
+	repair = make(map[string]utils.Message, 10)
 
 	var location string
-	for _, mess := range messages {
-		strs := strings.Split(mess.Text, "\n")
+	for _, msg := range messages {
+		strs := strings.Split(msg.Text, "\n")
 		for _, str := range strs {
 			location = p.rewriteLocation(str, location)
 			mark := p.findMark(str)
 			if location != "" && mark != "" {
+				tmpMsg := msg
+				tmpMsg.Text = "text from 1C"
+				tmpMsg.Loc = location
+				tmpMsg.Mark = mark
 				if p.findTO(str) {
-					to[mark] = utils.Resource{
-						Loc:  location,
-						Mess: mess,
-					}
+					to[mark] = tmpMsg
 				} else {
-					repair[mark] = utils.Resource{
-						Loc:  location,
-						Mess: mess,
-					}
+					repair[mark] = tmpMsg
 				}
 			}
 		}

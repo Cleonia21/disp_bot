@@ -4,15 +4,15 @@ import (
 	"disp_bot/utils"
 )
 
-func (p *Parser) anyChat(messages []utils.Message, location string) (res map[string]utils.Resource) {
-	res = make(map[string]utils.Resource, 10)
-	for _, mess := range messages {
-		marks := p.findMarks(mess.Text)
+func (p *Parser) anyChat(messages []utils.Message, location string) (res map[string]utils.Message) {
+	res = make(map[string]utils.Message, 10)
+	for _, msg := range messages {
+		marks := p.findMarks(msg.Text)
 		for _, mark := range marks {
-			res[mark] = utils.Resource{
-				Loc:  location,
-				Mess: mess,
-			}
+			tmpMsg := msg
+			tmpMsg.Loc = location
+			tmpMsg.Mark = mark
+			res[mark] = tmpMsg
 		}
 	}
 	return res

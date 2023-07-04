@@ -1,5 +1,7 @@
 package utils
 
+import "fmt"
+
 // inputIDs
 const (
 	ID_default = iota
@@ -14,52 +16,24 @@ type Message struct {
 	Text      string
 	ReplyText string
 	From      int
+
+	Loc  string
+	Mark string
 }
 
-func NewMessage(text string) Message {
-	return Message{Text: text}
+func (m *Message) Print() {
+	fmt.Printf("-----------------------\ntext:\n{%v}\nerror: {%v}\nfrom {%v}\nloc  {%v}\nmark {%v}\n-----------------------\n",
+		m.Text, m.ReplyText, m.From, m.Loc, m.Mark)
 }
 
 func (m *Message) AddReply(text string) {
 	m.ReplyText += text
 }
 
-type ProcData struct {
-	MessPacks []Message
-}
-
-type UnProcData struct {
-	MessPacks map[int64][]Message
-	Checks    Checks
-}
-
-type Checks struct {
+type Conf struct {
 	Chat47        bool
 	ChatFlower    bool
 	OneC          bool
 	ChatStretches bool
 	Mail          bool
-}
-
-type Resource struct {
-	Loc  string
-	Mess Message
-}
-
-type ParsedData struct {
-	Chat47        map[string]Resource
-	ChatFlower    map[string]Resource
-	OneCto        map[string]Resource
-	OneCRepair    map[string]Resource
-	Mail          map[string]Resource
-	ChatStretches map[string]Resource
-	Unidentified  []Message
-}
-
-type UnParsedData struct {
-	Chat47        []Message
-	ChatFlower    []Message
-	OneC          []Message
-	ChatStretches []Message
-	Checks        Checks
 }

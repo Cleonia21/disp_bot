@@ -2,56 +2,80 @@ package analyzer
 
 import (
 	"disp_bot/utils"
+	"reflect"
 )
 
-func rules() func(key string) []rulePack {
-	rules := map[string][]rulePack{
-		"дженерал":      {{mail: true, oneCto: true}, {oneCto: true}},
-		"магистральная": {{mail: true, oneCto: true}},
-		"цкр":           {{mail: true, oneCto: true}},
-		"авторемонт огородный": {{mail: true, oneCto: true}},
-		"сокольники":           {{mail: true, oneCRepair: true}},
-		"кулак":                {{mail: true, oneCRepair: true}},
-		"остап":                {{mail: true, oneCRepair: true}},
-		"волжский":             {{mail: true, oneCRepair: true}},
-		"полбина":              {{mail: true, oneCRepair: true}, {oneCto: true}},
-		"выборгская":           {{mail: true, oneCRepair: true}},
-		"рольф ярославка":      {{mail: true, oneCRepair: true}},
-		"рольф варшавка":       {{mail: true, oneCRepair: true}, {oneCto: true}},
-		"автофорум":            {{mail: true, oneCRepair: true}, {oneCto: true}},
-		"про-сто":              {{mail: true, oneCRepair: true}},
-		"автолайт прокатная":   {{mail: true, oneCRepair: true}},
-		"поречная":             {{mail: true, oneCRepair: true}},
-		"рольф восток":         {{mail: true, oneCRepair: true}},
-		"авторемонт плюс":      {{mail: true, oneCRepair: true}},
+type Data struct {
+	Chat47        map[string]utils.Message
+	ChatFlower    map[string]utils.Message
+	OneCto        map[string]utils.Message
+	OneCRepair    map[string]utils.Message
+	MailKuzov     map[string]utils.Message
+	MailService   map[string]utils.Message
+	ChatStretches map[string]utils.Message
+}
 
-		"цветок":       {{mail: true, oneCRepair: true}, {oneCto: true, chatFlower: true}},
-		"47":           {{mail: true, oneCRepair: true}, {oneCto: true, chat47: true}},
-		"марксистская": {{mail: true, oneCRepair: true}, {oneCto: true}},
-		"шикана":       {{mail: true, oneCRepair: true}},
-		"дубровка":     {{mail: true, oneCRepair: true}, {oneCto: true}},
-		"автоигл":      {{mail: true, oneCRepair: true}},
+func rules(conf utils.Conf) func(key string) []rulePack {
+	rulesData := map[string][]rulePack{
+		"дженерал":      {{mailService: true, oneCService: true}, {oneCto: true}, {mailKuzov: true}},
+		"магистральная": {{mailKuzov: true}},
+		"цкр":           {{mailService: true, oneCService: true}, {mailKuzov: true}},
+		"авторемонт огородный": {{mailKuzov: true}},
+		"сокольники":           {{mailKuzov: true}},
+		"кулак":                {{mailService: true, oneCService: true}, {mailKuzov: true}},
+		"остап":                {{mailKuzov: true}},
+		"волжский":             {{mailService: true, oneCService: true}, {mailKuzov: true}},
+		"полбина":              {{mailService: true, oneCService: true}, {oneCto: true}, {mailKuzov: true}},
+		"выборгская":           {{mailService: true, oneCService: true}, {mailKuzov: true}},
+		"рольф ярославка":      {{mailKuzov: true}},
+		"рольф варшавка":       {{mailKuzov: true}, {oneCto: true}},
+		"автофорум":            {{mailKuzov: true}, {oneCto: true}},
+		"про-сто":              {{mailKuzov: true}},
+		"автолайт прокатная":   {{mailKuzov: true}},
+		"поречная":             {{mailKuzov: true}},
+		"рольф восток":         {{mailKuzov: true}},
+		"авторемонт плюс":      {{mailKuzov: true}},
+
+		"цветок":       {{mailService: true, oneCService: true}, {oneCto: true, chatFlower: true}},
+		"47":           {{mailService: true, oneCService: true}, {oneCto: true, chat47: true}},
+		"марксистская": {{mailService: true, oneCService: true}, {oneCto: true}},
+		"шикана":       {{mailService: true, oneCService: true}},
+		"дубровка":     {{mailService: true, oneCService: true}, {oneCto: true}},
+		"автоигл":      {{mailService: true, oneCService: true}},
 		//"рольф центр": ["=========не нашел таких перегонов========="],
-		"обручева": {{mail: true, oneCRepair: true}, {oneCto: true}},
-		"авторусь": {{mail: true, oneCRepair: true}},
-		"азимут":   {{mail: true, oneCRepair: true}},
-		"авалон":   {{mail: true, oneCRepair: true}},
+		"обручева": {{mailService: true, oneCService: true}, {oneCto: true}},
+		"авторусь": {{mailService: true, oneCService: true}},
+		"азимут":   {{mailService: true, oneCService: true}},
+		"авалон":   {{mailService: true, oneCService: true}},
 
-		"казаков": {{oneCRepair: true}},
-		"офис":    {{mail: true}},
+		"казаков": {{oneCService: true}},
+		"офис":    {{mailService: true}},
 	}
 
 	return func(key string) []rulePack {
-		return rules[key]
+		rulesSet := rulesData[key]
+		var modRulesSet []rulePack
+		for _, rule := range rulesSet {
+			rule.oneCto = rule.oneCto && conf.OneC
+			rule.oneCService = rule.oneCService && conf.OneC
+			rule.chatFlower = rule.chatFlower && conf.ChatFlower
+			rule.chat47 = rule.chat47 && conf.Chat47
+			rule.mailService = rule.mailService && conf.Mail
+			rule.mailKuzov = rule.mailKuzov && conf.Mail
+			//conf.ChatStretches
+			modRulesSet = append(modRulesSet, rule)
+		}
+		return modRulesSet
 	}
 }
 
 type rulePack struct {
-	mail       bool
-	chat47     bool
-	chatFlower bool
-	oneCto     bool
-	oneCRepair bool
+	mailService bool
+	mailKuzov   bool
+	chat47      bool
+	chatFlower  bool
+	oneCto      bool
+	oneCService bool
 }
 
 type Analyzer struct {
@@ -61,17 +85,47 @@ func Init() *Analyzer {
 	return &Analyzer{}
 }
 
-func (a *Analyzer) checkRule(data utils.ParsedData, rule rulePack, grz string) (msgs []utils.Message, ok bool) {
-	resStrech := data.ChatStretches[grz]
-	if rule.oneCRepair {
-		resOneCRepair, find := data.OneCRepair[grz]
+func (a *Analyzer) Analyze(parsedData Data, conf utils.Conf) (msgs []utils.Message) {
+	getRules := rules(conf)
+
+	for grz, stretch := range parsedData.ChatStretches {
+		var tmpMsgs []utils.Message
+		var ok bool
+		rules := getRules(stretch.Loc)
+		for _, rule := range rules {
+			if reflect.DeepEqual(rule, rulePack{}) {
+				continue
+			}
+			var checkMsgs []utils.Message
+			checkMsgs, ok = a.checkRule(parsedData, rule, grz)
+			if ok {
+				break
+			}
+			tmpMsgs = append(tmpMsgs, checkMsgs...)
+		}
+		if !ok {
+			msgs = append(msgs, tmpMsgs...)
+		}
+	}
+	msgs = append(msgs, a.findUnused(parsedData)...)
+	return
+}
+
+func (a *Analyzer) checkRule(data Data, rule rulePack, grz string) (msgs []utils.Message, ok bool) {
+	stretchesMsg := data.ChatStretches[grz]
+	ok = true
+
+	if rule.oneCService {
+		msg, find := data.OneCRepair[grz]
 		if !find {
 			ok = false
-			msgs = append(msgs, utils.NewMessage(grz+" не найден в 1С(как заявка на ремонт)"))
-		} else if resOneCRepair.Loc != resStrech.Loc {
+			tmpMsg := stretchesMsg
+			tmpMsg.AddReply("не найден в 1С(как заявка на ремонт)")
+			msgs = append(msgs, tmpMsg)
+		} else if msg.Loc != stretchesMsg.Loc {
 			ok = false
-			resOneCRepair.Mess.AddReply(grz + " не совпадает с сервисом из перегоны")
-			msgs = append(msgs, resOneCRepair.Mess)
+			msg.AddReply(grz + " не совпадает с сервисом из перегоны")
+			msgs = append(msgs, msg)
 		}
 
 		if find {
@@ -80,14 +134,16 @@ func (a *Analyzer) checkRule(data utils.ParsedData, rule rulePack, grz string) (
 	}
 
 	if rule.oneCto {
-		resOneCto, find := data.OneCto[grz]
+		msg, find := data.OneCto[grz]
 		if !find {
 			ok = false
-			msgs = append(msgs, utils.NewMessage(grz+" не найден в 1С(как заявка на ТО)"))
-		} else if resOneCto.Loc != resStrech.Loc {
+			tmpMsg := stretchesMsg
+			tmpMsg.AddReply("не найден в 1С(как заявка на ТО)")
+			msgs = append(msgs, tmpMsg)
+		} else if msg.Loc != stretchesMsg.Loc {
 			ok = false
-			resOneCto.Mess.AddReply(grz + " не совпадает с сервисом из перегоны")
-			msgs = append(msgs, resOneCto.Mess)
+			msg.AddReply(grz + " не совпадает с сервисом из перегоны")
+			msgs = append(msgs, msg)
 		}
 
 		if find {
@@ -95,19 +151,39 @@ func (a *Analyzer) checkRule(data utils.ParsedData, rule rulePack, grz string) (
 		}
 	}
 
-	if rule.mail {
-		resMail, find := data.Mail[grz]
+	if rule.mailKuzov {
+		msg, find := data.MailKuzov[grz]
 		if !find {
 			ok = false
-			msgs = append(msgs, utils.NewMessage(grz+" не найден на почте"))
-		} else if resMail.Loc != resStrech.Loc {
+			tmpMsg := stretchesMsg
+			tmpMsg.AddReply("не отправлен на kuzov")
+			msgs = append(msgs, tmpMsg)
+		} else if msg.Loc != stretchesMsg.Loc {
 			ok = false
-			resMail.Mess.AddReply(grz + " не совпадает с сервисом из перегоны")
-			msgs = append(msgs, resMail.Mess)
+			msg.AddReply(grz + " не совпадает с сервисом из перегоны")
+			msgs = append(msgs, msg)
 		}
 
 		if find {
-			delete(data.Mail, grz)
+			delete(data.MailKuzov, grz)
+		}
+	}
+
+	if rule.mailService {
+		msg, find := data.MailService[grz]
+		if !find {
+			ok = false
+			tmpMsg := stretchesMsg
+			tmpMsg.AddReply("не отправлен на service")
+			msgs = append(msgs, tmpMsg)
+		} else if msg.Loc != stretchesMsg.Loc {
+			ok = false
+			msg.AddReply(grz + " не совпадает с сервисом из перегоны")
+			msgs = append(msgs, msg)
+		}
+
+		if find {
+			delete(data.MailService, grz)
 		}
 	}
 
@@ -115,7 +191,9 @@ func (a *Analyzer) checkRule(data utils.ParsedData, rule rulePack, grz string) (
 		_, find := data.ChatFlower[grz]
 		if !find {
 			ok = false
-			msgs = append(msgs, utils.NewMessage(grz+" не найден в чате цветка"))
+			tmpMsg := stretchesMsg
+			tmpMsg.AddReply("не найден в чате цветка")
+			msgs = append(msgs, tmpMsg)
 		}
 
 		if find {
@@ -127,7 +205,9 @@ func (a *Analyzer) checkRule(data utils.ParsedData, rule rulePack, grz string) (
 		_, find := data.Chat47[grz]
 		if !find {
 			ok = false
-			msgs = append(msgs, utils.NewMessage(grz+" не найден в чате 47го"))
+			tmpMsg := stretchesMsg
+			tmpMsg.AddReply("не найден в чате 47го")
+			msgs = append(msgs, tmpMsg)
 		}
 
 		if find {
@@ -137,50 +217,21 @@ func (a *Analyzer) checkRule(data utils.ParsedData, rule rulePack, grz string) (
 	return
 }
 
-func (a *Analyzer) findUnused(parsedData utils.ParsedData) []utils.Message {
-	findRess := func(ress map[string]utils.Resource) []utils.Message {
-		var msgs []utils.Message
-		for grz, res := range ress {
-			res.Mess.AddReply(grz + " не найден в чате перегонов")
-			msgs = append(msgs, res.Mess)
+func (a *Analyzer) findUnused(parsedData Data) (msgs []utils.Message) {
+	modAndReturn := func(msgs map[string]utils.Message) (modMsgs []utils.Message) {
+		for _, msg := range msgs {
+			msg.AddReply(msg.Mark + " не найден в чате перегонов или нахождение в источнике не подразумевается")
+			modMsgs = append(modMsgs, msg)
 		}
-		return msgs
+		return
 	}
 
-	var msgs []utils.Message
-
-	msgs = append(msgs, findRess(parsedData.ChatFlower)...)
-	msgs = append(msgs, findRess(parsedData.Chat47)...)
-	msgs = append(msgs, findRess(parsedData.OneCRepair)...)
-	msgs = append(msgs, findRess(parsedData.OneCto)...)
-	msgs = append(msgs, findRess(parsedData.Mail)...)
+	msgs = append(msgs, modAndReturn(parsedData.ChatFlower)...)
+	msgs = append(msgs, modAndReturn(parsedData.Chat47)...)
+	msgs = append(msgs, modAndReturn(parsedData.OneCRepair)...)
+	msgs = append(msgs, modAndReturn(parsedData.OneCto)...)
+	msgs = append(msgs, modAndReturn(parsedData.MailKuzov)...)
+	msgs = append(msgs, modAndReturn(parsedData.MailService)...)
 
 	return msgs
-}
-
-func (a *Analyzer) Analyze(parsedData utils.ParsedData) []utils.Message {
-	messages := parsedData.Unidentified
-	getRules := rules()
-
-	for grz, stretch := range parsedData.ChatStretches {
-		var tmpMsgs []utils.Message
-		var ok bool
-		rules := getRules(stretch.Loc)
-		for _, rule := range rules {
-			var checkMsgs []utils.Message
-			checkMsgs, ok = a.checkRule(parsedData, rule, grz)
-			if ok {
-				break
-			}
-			tmpMsgs = append(tmpMsgs, checkMsgs...)
-		}
-		if !ok {
-			messages = append(messages, tmpMsgs...)
-		}
-	}
-
-	messages = append(messages, a.findUnused(parsedData)...)
-	messages = append(messages, parsedData.Unidentified...)
-
-	return messages
 }

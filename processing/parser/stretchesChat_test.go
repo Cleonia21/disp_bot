@@ -14,7 +14,7 @@ func TestParser_stretchesChat(t *testing.T) {
 	tests := []struct {
 		name         string
 		args         args
-		wantResces   map[string]utils.Resource
+		wantResces   map[string]utils.Message
 		wantUnIdents []utils.Message
 	}{
 		{
@@ -45,41 +45,36 @@ func TestParser_stretchesChat(t *testing.T) {
 					ID:   6,
 				},
 			}},
-			wantResces: map[string]utils.Resource{
+			wantResces: map[string]utils.Message{
 				"с688но790": {
-					Loc: "казаков",
-					Mess: utils.Message{
-						Text: "https://ticket.belkacar.ru/ticket/NWOPA9\nс688но790\nКазаков Моторс",
-						ID:   1,
-					},
+					Loc:  "казаков",
+					Text: "https://ticket.belkacar.ru/ticket/NWOPA9\nс688но790\nКазаков Моторс",
+					ID:   1,
+					Mark: "с688но790",
 				},
 				"е620сн790": {
-					Loc: "дженерал",
-					Mess: utils.Message{
-						Text: "https://ticket.belkacar.ru/ticket/TOBUQC\nе620сн790\nДженерал",
-						ID:   2,
-					},
+					Loc:  "дженерал",
+					Mark: "е620сн790",
+					Text: "https://ticket.belkacar.ru/ticket/TOBUQC\nе620сн790\nДженерал",
+					ID:   2,
 				},
 				"р353мх797": {
-					Loc: "цкр",
-					Mess: utils.Message{
-						Text: "https://ticket.belkacar.ru/ticket/12198802\nр353мх797\nЦкр-авто",
-						ID:   3,
-					},
+					Loc:  "цкр",
+					Mark: "р353мх797",
+					Text: "https://ticket.belkacar.ru/ticket/12198802\nр353мх797\nЦкр-авто",
+					ID:   3,
 				},
 				"р835мм797": {
-					Loc: "офис",
-					Mess: utils.Message{
-						Text: "https://ticket.belkacar.ru/ticket/12205928\nр835мм797\nВ офис (после 0:00)\nНовогиреево",
-						ID:   4,
-					},
+					Loc:  "офис",
+					Mark: "р835мм797",
+					Text: "https://ticket.belkacar.ru/ticket/12205928\nр835мм797\nВ офис (после 0:00)\nНовогиреево",
+					ID:   4,
 				},
 				"в412нс790": {
-					Loc: "поречная",
-					Mess: utils.Message{
-						Text: "https://ticket.belkacar.ru/ticket/AJZNQP\nв412нс790\nПоречная\nНа линии",
-						ID:   5,
-					},
+					Loc:  "поречная",
+					Mark: "в412нс790",
+					Text: "https://ticket.belkacar.ru/ticket/AJZNQP\nв412нс790\nПоречная\nНа линии",
+					ID:   5,
 				},
 			},
 			wantUnIdents: []utils.Message{

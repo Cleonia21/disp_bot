@@ -144,6 +144,11 @@ func TestParser_findLocation(t *testing.T) {
 			args{"+"},
 			"",
 		},
+		{
+			"",
+			args{"Руслан Залдя, [14.06.2023 06:28]\nhttps://ticket.belkacar.ru/ticket/12221868\nт198вх790\nШикана\n47"},
+			"шикана",
+		},
 	}
 	p := Init()
 	for _, tt := range tests {
@@ -380,6 +385,61 @@ func TestParser_findURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := p.findURL(tt.args.s); got != tt.want {
 				t.Errorf("findURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParser_findOneCStretches(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			"",
+			args{"АВТО ЛИГА. ул Кулаков пер.д 6\n"},
+			false,
+		},
+		{
+			"",
+			args{"1  ;к293еа790/XW8ZZZ61ZLG026098/Polo/134 234/ 47 47 47 У авзакрыть ывается;\n"},
+			true,
+		},
+		{
+			"",
+			args{"2  ;н102мс797/LVTDB21B4ND333680/LX/9 906/масло вытекло, мотор предым состоянии;\n"},
+			true,
+		},
+		{
+			"",
+			args{"АВТОЛАЙТ.Полбина 29,с1\n"},
+			false,
+		},
+		{
+			"",
+			args{"1  ;т637мх797/XZGEE04A0NA820320/Jolion/40 832/Переднее окно не реаги;\n"},
+			true,
+		},
+		{
+			"",
+			args{"МЭЙДЖОР KIA VW HAVAL .47 км МКАД\n"},
+			false,
+		},
+		{
+			"",
+			args{""},
+			false,
+		},
+	}
+	p := Init()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := p.findOneCStretches(tt.args.s); got != tt.want {
+				t.Errorf("findOneCStretches() = %v, want %v", got, tt.want)
 			}
 		})
 	}

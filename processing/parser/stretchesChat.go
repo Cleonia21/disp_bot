@@ -6,26 +6,25 @@ import (
 )
 
 func (p *Parser) stretchesChat(messages []utils.Message) (
-	resces map[string]utils.Resource, unIdents []utils.Message) {
+	resces map[string]utils.Message, undef []utils.Message) {
 
-	resces = make(map[string]utils.Resource, 10)
+	resces = make(map[string]utils.Message, 10)
 	for _, msg := range messages {
-		str := removeUnprocPart(msg.Text)
-		str = p.removeURL(str)
+		str := p.removeURL(msg.Text)
 		mark := p.findMark(str)
 		location := p.findLocation(str)
 		replyText := identify(mark, location)
+		tmpMsg := msg
+		tmpMsg.Loc = location
+		tmpMsg.Mark = mark
 		if replyText == "" {
-			resces[mark] = utils.Resource{
-				Loc:  location,
-				Mess: msg,
-			}
+			resces[mark] = tmpMsg
 		} else {
-			msg.AddReply(replyText)
-			unIdents = append(unIdents, msg)
+			tmpMsg.AddReply(replyText)
+			undef = append(undef, tmpMsg)
 		}
 	}
-	return resces, unIdents
+	return resces, undef
 }
 
 func removeUnprocPart(str string) (procPart string) {

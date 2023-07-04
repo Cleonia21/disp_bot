@@ -29,10 +29,12 @@ func (p *Parser) findTO(s string) bool {
 	return p.techServiceRegExp.FindStringSubmatch(s) != nil
 }
 
-func (p *Parser) findLocation(s string) string {
-	for location, regExp := range p.locationsRegExp {
-		if regExp.MatchString(s) {
-			return location
+func (p *Parser) findLocation(str string) string {
+	for _, s := range strings.Split(str, "\n") {
+		for location, regExp := range p.locationsRegExp {
+			if regExp.MatchString(s) {
+				return location
+			}
 		}
 	}
 	return ""
@@ -40,6 +42,10 @@ func (p *Parser) findLocation(s string) string {
 
 func (p *Parser) findURL(s string) bool {
 	return p.urlRegExp.MatchString(s)
+}
+
+func (p *Parser) findOneCStretches(s string) bool {
+	return p.oneCStretchesRegExp.MatchString(s)
 }
 
 func stateMarkRegExp() (*regexp.Regexp, error) {
@@ -52,6 +58,10 @@ func techServiceRegExp() (*regexp.Regexp, error) {
 
 func urlRegExp() (*regexp.Regexp, error) {
 	return regexp.Compile(`(?i)(?:https?|ftp):\/\/[\n\S]+`)
+}
+
+func oneCStretchesRegExp() (*regexp.Regexp, error) {
+	return regexp.Compile(`\d+.*;.*\/.*\/.*\/.*\/.*;.*`)
 }
 
 func locationsRegExp() (locationsRegExp map[string]*regexp.Regexp, err error) {
@@ -71,7 +81,7 @@ func locationsRegExp() (locationsRegExp map[string]*regexp.Regexp, err error) {
 
 func locationsPatterns() (patterns map[string][]string) {
 	patterns = make(map[string][]string)
-	file, err := os.Open("conf/locations.json")
+	file, err := os.Open("/home/cleonia/Desktop/disp_bot/conf/locations.json")
 	if err != nil {
 		log.Fatal(err)
 	}
