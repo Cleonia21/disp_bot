@@ -19,7 +19,7 @@ type Bot struct {
 }
 
 func Init() *Bot {
-	b := &Bot{}
+	b := &Bot{} //
 	botToken := ""
 	b.messPacks = make(map[int64]*messagesPack)
 
