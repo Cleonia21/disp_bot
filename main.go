@@ -1,5 +1,8 @@
 package main
 
+import "disp_bot/telegram"
+
 func main() {
-	//processing.Init()
+	bot := telegram.Init()
+	bot.Start()
 }

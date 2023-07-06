@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"disp_bot/processing"
+	"disp_bot/telegram/msgsPack"
 	"errors"
 	"fmt"
 	"github.com/mymmrac/telego"
@@ -10,7 +11,7 @@ import (
 
 type Bot struct {
 	telegram  *telego.Bot
-	messPacks map[int64]*messagesPack
+	messPacks map[telego.ChatID]*msgsPack.MsgsPack
 
 	proc *processing.Proc
 
@@ -21,7 +22,7 @@ type Bot struct {
 func Init() *Bot {
 	b := &Bot{} //
 	botToken := ""
-	b.messPacks = make(map[int64]*messagesPack)
+	b.messPacks = make(map[telego.ChatID]*msgsPack.MsgsPack)
 
 	// Create Bot with debug on
 	// Note: Please keep in mind that default logger may expose sensitive information, use in development only
@@ -45,10 +46,10 @@ func (b *Bot) Start() {
 
 	// Loop through all tgGetChan when they came
 	for update := range b.tgGetChan {
-		if update.Message == nil {
+		if update.Message == nil && update.CallbackQuery == nil {
 			continue
 		}
 		//update.Message.From.ID
-		b.handler(update.Message)
+		b.msgsProc(&update)
 	}
 }
