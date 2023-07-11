@@ -18,6 +18,10 @@ func (p *MsgsPack) handleCallbackQuery(update *telego.Update) {
 	}
 	p.clearMsgs()
 	p.oldCallbackQueryData = update.CallbackQuery.Data
+	err := p.telegram.AnswerCallbackQuery(&telego.AnswerCallbackQueryParams{CallbackQueryID: update.CallbackQuery.ID})
+	if err != nil {
+		p.telegram.Logger().Errorf(err.Error())
+	}
 }
 
 func (p *MsgsPack) modConf() {

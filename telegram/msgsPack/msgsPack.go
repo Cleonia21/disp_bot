@@ -4,6 +4,7 @@ import (
 	"disp_bot/utils"
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
+	"time"
 )
 
 const (
@@ -52,14 +53,42 @@ func Init(telegram *telego.Bot, chatID telego.ChatID) *MsgsPack {
 	return &pack
 }
 
-func (p *MsgsPack) GetUpdate(update *telego.Update) {
-	p.deleteInlineMenu()
-	if update.CallbackQuery != nil {
-		p.handleCallbackQuery(update)
-	} else if update.Message != nil {
-		p.saveMsg(update.Message)
+func (p *MsgsPack) GetUpdate(update <-chan *telego.Update) {
+	sendMenuAfterSecond := make(chan int)
+	sendMenuNow := make(chan int)
+	go p.reSendMenu(sendMenuAfterSecond, sendMenuNow)
+	for u := range update {
+		if u.CallbackQuery != nil {
+			p.handleCallbackQuery(u)
+			sendMenuNow <- 0
+		} else if u.Message != nil {
+			p.saveMsg(u.Message)
+			sendMenuAfterSecond <- 0
+		}
 	}
-	p.sendInlineMenu()
+}
+
+func (p *MsgsPack) reSendMenu(renewTimer <-chan int, doNow <-chan int) {
+	var t time.Time
+	var dellFlag bool
+	for {
+		select {
+		case <-renewTimer:
+			t = time.Now()
+			dellFlag = true
+		case <-doNow:
+			dellFlag = false
+			p.deleteInlineMenu()
+			p.sendInlineMenu()
+		default:
+			if dellFlag &&
+				time.Since(t) > time.Since(time.Now())+time.Second {
+				p.deleteInlineMenu()
+				p.sendInlineMenu()
+				dellFlag = false
+			}
+		}
+	}
 }
 
 func (p *MsgsPack) deleteInlineMenu() {

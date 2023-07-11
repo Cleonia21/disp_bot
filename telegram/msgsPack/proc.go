@@ -27,7 +27,10 @@ func (p *MsgsPack) msgsSend(msgs []utils.Message) {
 	for id, text := range replyText {
 		msg := tu.Message(p.chatID, text).
 			WithReplyToMessageID(id)
-		_, _ = p.telegram.SendMessage(msg)
+		_, err := p.telegram.SendMessage(msg)
+		if err != nil {
+			p.telegram.Logger().Errorf(err.Error())
+		}
 	}
 }
 

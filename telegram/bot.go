@@ -1,8 +1,8 @@
 package telegram
 
 import (
+	"disp_bot/conf"
 	"disp_bot/processing"
-	"disp_bot/telegram/msgsPack"
 	"errors"
 	"fmt"
 	"github.com/mymmrac/telego"
@@ -11,7 +11,7 @@ import (
 
 type Bot struct {
 	telegram  *telego.Bot
-	messPacks map[telego.ChatID]*msgsPack.MsgsPack
+	messPacks map[telego.ChatID]chan *telego.Update
 
 	proc *processing.Proc
 
@@ -21,13 +21,13 @@ type Bot struct {
 
 func Init() *Bot {
 	b := &Bot{} //
-	botToken := ""
-	b.messPacks = make(map[telego.ChatID]*msgsPack.MsgsPack)
+	botToken := conf.TOKEN
+	b.messPacks = make(map[telego.ChatID]chan *telego.Update)
 
 	// Create Bot with debug on
 	// Note: Please keep in mind that default logger may expose sensitive information, use in development only
 	err := errors.New("")
-	b.telegram, err = telego.NewBot(botToken, telego.WithDefaultDebugLogger())
+	b.telegram, err = telego.NewBot(botToken) //, telego.WithDefaultDebugLogger())
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

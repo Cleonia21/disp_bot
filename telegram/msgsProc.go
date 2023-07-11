@@ -6,11 +6,11 @@ import (
 )
 
 func (b *Bot) msgsProc(update *telego.Update) {
-	pack := b.findMessPack(update)
-	pack.GetUpdate(update)
+	packChan := b.getPackChan(update)
+	packChan <- update
 }
 
-func (b *Bot) findMessPack(update *telego.Update) *msgsPack.MsgsPack {
+func (b *Bot) getPackChan(update *telego.Update) chan *telego.Update {
 	var chatID telego.ChatID
 	if update.Message != nil {
 		chatID.ID = update.Message.Chat.ID
@@ -21,6 +21,8 @@ func (b *Bot) findMessPack(update *telego.Update) *msgsPack.MsgsPack {
 		return pack
 	}
 	pack := msgsPack.Init(b.telegram, chatID)
-	b.messPacks[chatID] = pack
-	return pack
+	packChan := make(chan *telego.Update)
+	b.messPacks[chatID] = packChan
+	go pack.GetUpdate(packChan)
+	return packChan
 }
